@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wextra -O3 CMakeFiles/test_r1cs_qap.dir/tests/test_r1cs_qap.cpp.o -o test_r1cs_qap  libzkmini.a 

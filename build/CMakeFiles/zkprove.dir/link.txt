@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wextra -O3 CMakeFiles/zkprove.dir/apps/zkprove.cpp.o -o zkprove  libzkmini.a 

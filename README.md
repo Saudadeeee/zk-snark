@@ -1,1 +1,1 @@
-# zk-snark
+# zk-snrk

@@ -1,0 +1,117 @@
+#include "zkmini/.fq.hpp"
+#include "zkmini/.g1.hpp"
+#include "zkmini/.g2.hpp"
+
+namespace zkmini {
+
+// BN254 curve parameters and constants
+namespace bn254_params {
+
+// BN254 base field modulus p
+// p = 21888242871839275222246405745257275088696311157297823662689037894645226208583
+const uint64_t BN254_MODULUS[4] = {
+    0x3c208c16d87cfd47ULL, 0x97816a916871ca8dULL,
+    0xb85045b68181585dULL, 0x30644e72e131a029ULL
+};
+
+// BN254 scalar field modulus r (order of Fr)
+// r = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+const uint64_t BN254_SCALAR_MODULUS[4] = {
+    0x43e1f593f0000001ULL, 0x2833e84879b97091ULL,
+    0xb85045b68181585dULL, 0x30644e72e131a029ULL
+};
+
+// BN254 curve coefficient b = 3
+const uint64_t BN254_B = 3;
+
+// BN254 twisted curve coefficient b' = 3/(9+u) in Fq2
+// Where 9+u is the non-residue used for Fq2 construction
+// b' = (3, 0) / (9, 1) = (27/(82), -3/(82)) where 82 = 9^2 + 1^2
+const Fq2 BN254_B2_COEFF = Fq2(
+    Fq(0x2b149d40ceb8aaaeULL, 0x12ba50b4842366cbULL, 0x00bd79ee6a6eb2acULL, 0x16a2a19edfe81f20ULL),
+    Fq(0x418135895e96017dULL, 0x11b0bfb4e8b1bfa6ULL, 0x00b51a61c58b1dbdULL, 0x04be3b9a5b2b1e0aULL)
+);
+
+// G1 generator point (in affine coordinates)
+const G1 G1_GENERATOR = G1(
+    Fq(1), // x = 1
+    Fq(2)  // y = 2
+);
+
+// G2 generator point (in affine coordinates)  
+const G2 G2_GENERATOR = G2(
+    Fq2(
+        Fq(0xf5f28fa202940a10ULL, 0xb3f5fb2687b4961aULL, 0xa1a893b53e2ae580ULL, 0x10b4bf684ab79761ULL),
+        Fq(0x85b5fe8d8f2cddabULL, 0x3b44aa3b3a5ea6e4ULL, 0x2f6a7f4c4b7b4a1bULL, 0x0ac9ae2ad15d4bbdULL)
+    ),
+    Fq2(
+        Fq(0x8e83b5d102bc2026ULL, 0xdceb1935497b0172ULL, 0xfbb8264797811adfULL, 0x19573841af96503bULL),
+        Fq(0xafb4737da84c6140ULL, 0x6043dd5a5802d8c4ULL, 0x09bb7ae4f9f9b76aULL, 0x14b8c36d8a7f7582ULL)
+    )
+);
+
+// Frobenius coefficients for Fq2, Fq6, Fq12 tower
+const Fq FROBENIUS_COEFF_FQ2[2] = {
+    Fq(1),
+    Fq(0x30644e72e131a029ULL, 0xb85045b68181585dULL, 0x97816a916871ca8dULL, 0x3c208c16d87cfd46ULL)
+};
+
+const Fq2 FROBENIUS_COEFF_FQ6_C1[6] = {
+    Fq2(Fq(1), Fq(0)),
+    Fq2(Fq(0x0cc3380dc616d9e7ULL, 0xc0a8e9896b84efadULL, 0x4a6a4e4e5d6b3f42ULL, 0x146e83d5e0b8e1a8ULL), Fq(0)),
+    Fq2(Fq(0x30644e72e131a029ULL, 0xb85045b68181585dULL, 0x97816a916871ca8dULL, 0x3c208c16d87cfd46ULL), Fq(0)),
+    Fq2(Fq(1), Fq(0)),
+    Fq2(Fq(0x0cc3380dc616d9e7ULL, 0xc0a8e9896b84efadULL, 0x4a6a4e4e5d6b3f42ULL, 0x146e83d5e0b8e1a8ULL), Fq(0)),
+    Fq2(Fq(0x30644e72e131a029ULL, 0xb85045b68181585dULL, 0x97816a916871ca8dULL, 0x3c208c16d87cfd46ULL), Fq(0))
+};
+
+// Pairing parameters
+const uint64_t ATE_LOOP_COUNT = 0x019d797039be763ba8ULL;
+const bool ATE_IS_LOOP_COUNT_NEG = false;
+
+// 6u + 2 for final exponentiation
+const uint64_t FINAL_EXP_COEFF = 0x00d201000000010001ULL;
+
+} // namespace bn254_params
+
+// Montgomery reduction constants for Fq
+namespace montgomery {
+
+// R = 2^256 mod p
+const uint64_t R[4] = {
+    0x3c208c16d87cfd47ULL, 0x97816a916871ca8dULL,
+    0xb85045b68181585dULL, 0x30644e72e131a029ULL
+};
+
+// R^2 mod p for Montgomery form conversion
+const uint64_t R2[4] = {
+    0xf32cfc5b538afa89ULL, 0xb5e71911d44501fbULL,
+    0x47ab1eff0a417ff6ULL, 0x06d89f71cab8351fULL
+};
+
+// -p^(-1) mod 2^64 for Montgomery reduction
+const uint64_t INV = 0x87d20782e4866389ULL;
+
+} // namespace montgomery
+
+// Montgomery reduction constants for Fr
+namespace montgomery_fr {
+
+// R = 2^256 mod r
+const uint64_t R[4] = {
+    0xac96341c4ffffffbULL, 0x36fc76959f60cd29ULL,
+    0x666ea36f7879462eULL, 0x0e0a77c19a07df2fULL
+};
+
+// R^2 mod r for Montgomery form conversion  
+const uint64_t R2[4] = {
+    0x1bb8e645ae216da7ULL, 0x53fe3ab1e35c59e3ULL,
+    0x8c49833d53bb8085ULL, 0x0216d0b17f4e44a5ULL
+};
+
+// -r^(-1) mod 2^64 for Montgomery reduction
+const uint64_t INV = 0xc2e1f593efffffffULL;
+
+} // namespace montgomery_fr
+
+} // namespace zkmini

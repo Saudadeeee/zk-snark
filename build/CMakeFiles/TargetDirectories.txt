@@ -1,0 +1,17 @@
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/zkmini.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/zksetup.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/zkprove.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/zkverify.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test_ec.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test_field.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test_field_basic.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test_field_comprehensive.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test_pairing.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test_poly.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/test.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/edit_cache.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/rebuild_cache.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/list_install_components.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/install.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/install/local.dir
+/home/khenh/Code/Project/zk-snark/zk-complete/build/CMakeFiles/install/strip.dir
