@@ -1,5 +1,5 @@
-#include "zkmini/.groth16.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/groth16.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>

@@ -1,1 +1,0 @@
-/usr/bin/c++  -Wall -Wextra -O3 CMakeFiles/zkverify.dir/apps/zkverify.cpp.o -o zkverify  libzkmini.a 

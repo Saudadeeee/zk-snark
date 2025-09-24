@@ -51,7 +51,7 @@ public:
     };
     
     // Static configuration - switch between development and production
-    static constexpr bool USE_64BIT_DEV = true;
+    static constexpr bool USE_64BIT_DEV = false;  // Set to false for BN254 256-bit mode
     static constexpr uint64_t MODULUS = bn254_fr::MODULUS_DEV;
 
     // Constructors
@@ -113,7 +113,25 @@ private:
     static uint64_t pow_mod(uint64_t base, uint64_t exp, uint64_t mod);
     static uint64_t inv_mod(uint64_t a, uint64_t mod); // Extended Euclidean
     
-    // Future: Montgomery arithmetic helpers
+    // 256-bit arithmetic helpers
+    static std::array<uint64_t, 4> add_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
+    static std::array<uint64_t, 4> sub_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
+    static std::array<uint64_t, 4> neg_256(const std::array<uint64_t, 4>& a);
+    static std::array<uint64_t, 4> mul_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
+    static std::array<uint64_t, 4> pow_256(const std::array<uint64_t, 4>& base, uint64_t exp);
+    static std::array<uint64_t, 4> pow_256(const std::array<uint64_t, 4>& base, const std::array<uint64_t, 4>& exp);
+    static std::array<uint64_t, 4> inv_256(const std::array<uint64_t, 4>& a);
+    static void reduce_256(std::array<uint64_t, 4>& a);
+    static bool is_less_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
+    static bool is_zero_256(const std::array<uint64_t, 4>& a);
+    
+    // Helper functions for Extended Euclidean Algorithm
+    static bool is_even_256(const std::array<uint64_t, 4>& a);
+    static bool is_one_256(const std::array<uint64_t, 4>& a);
+    static std::array<uint64_t, 4> div2_256(const std::array<uint64_t, 4>& a);
+    static std::array<uint64_t, 4> sub_256_signed(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
+    
+    // Future: Montgomery arithmetic helpers (for optimization)
     // static std::array<uint64_t, 4> montgomery_mul(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
     // static std::array<uint64_t, 4> montgomery_reduce(const std::array<uint64_t, 8>& t);
 };

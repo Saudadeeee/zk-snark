@@ -1,1 +1,0 @@
-/usr/bin/c++  -Wall -Wextra -O3 CMakeFiles/zksetup.dir/apps/zksetup.cpp.o -o zksetup  libzkmini.a 

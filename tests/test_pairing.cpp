@@ -1,5 +1,5 @@
-#include "zkmini/.pairing.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/pairing.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <cassert>
 

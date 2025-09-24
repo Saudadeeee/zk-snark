@@ -1,5 +1,5 @@
-#include "zkmini/.polynomial.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/polynomial.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <cassert>
 

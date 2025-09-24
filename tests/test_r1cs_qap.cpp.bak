@@ -1,7 +1,7 @@
 #include "zkmini/.r1cs.hpp"
 #include "zkmini/.qap.hpp"
 #include "examples/ab_circuit.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <cassert>
 

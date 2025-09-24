@@ -1,6 +1,6 @@
-#include "zkmini/.g1.hpp"
-#include "zkmini/.g2.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/g1.hpp"
+#include "zkmini/g2.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <cassert>
 

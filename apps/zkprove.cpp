@@ -1,7 +1,7 @@
-#include "zkmini/.groth16.hpp"
-#include "zkmini/.r1cs.hpp"
-#include "zkmini/.qap.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/groth16.hpp"
+#include "zkmini/r1cs.hpp"
+#include "zkmini/qap.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>

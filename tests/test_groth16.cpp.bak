@@ -1,6 +1,6 @@
 #include "zkmini/.groth16.hpp"
 #include "examples/ab_circuit.hpp"
-#include "zkmini/.utils.hpp"
+#include "zkmini/utils.hpp"
 #include <iostream>
 #include <cassert>
 

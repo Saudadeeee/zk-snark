@@ -1,1 +1,0 @@
-/usr/bin/c++  -Wall -Wextra -O3 CMakeFiles/test_ec.dir/tests/test_ec.cpp.o -o test_ec  libzkmini.a 

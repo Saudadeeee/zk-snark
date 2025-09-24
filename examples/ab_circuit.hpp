@@ -1,6 +1,6 @@
 #pragma once
 
-#include "zkmini/.r1cs.hpp"
+#include "zkmini/r1cs.hpp"
 #include "zkmini/field.hpp"
 
 namespace zkmini {
