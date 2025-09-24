@@ -11,7 +11,7 @@
 
 namespace zkmini {
 
-// ProgressBar implementation
+
 ProgressBar::ProgressBar(size_t total, const std::string& description) 
     : total(total), last_printed(0), description(description) {
     start_time = std::chrono::high_resolution_clock::now();
@@ -19,7 +19,7 @@ ProgressBar::ProgressBar(size_t total, const std::string& description)
 }
 
 void ProgressBar::update(size_t current) {
-    size_t progress = (current * 50) / total; // 50 character progress bar
+    size_t progress = (current * 50) / total; 
     if (progress > last_printed) {
         for (size_t i = last_printed; i < progress; ++i) {
             std::cout << "=" << std::flush;
@@ -45,14 +45,13 @@ void ProgressBar::print_bar(size_t current) {
     update(current);
 }
 
-// MemoryInfo implementation
 size_t MemoryInfo::get_memory_usage() {
 #ifdef __linux__
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
-    return usage.ru_maxrss * 1024; // Convert from KB to bytes
+    return usage.ru_maxrss * 1024; 
 #else
-    return 0; // Not implemented for non-Linux systems
+    return 0; 
 #endif
 }
 
@@ -112,7 +111,6 @@ uint64_t BitUtils::reverse_bits(uint64_t x) {
     return (x >> 32) | (x << 32);
 }
 
-// StringUtils implementation
 std::string StringUtils::bytes_to_hex(const std::vector<uint8_t>& bytes) {
     std::ostringstream oss;
     oss << std::hex << std::setfill('0');
@@ -167,4 +165,4 @@ std::string StringUtils::join(const std::vector<std::string>& strings, const std
     return oss.str();
 }
 
-} // namespace zkmini
+} 

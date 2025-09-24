@@ -182,7 +182,6 @@ Fr Fr::pow(const Fr& exponent) const {
 
 Fr Fr::inverse() const {
     if (is_zero()) {
-        // Return 0 for inverse of 0 as per design decision
         return Fr(0);
     }
     
@@ -283,7 +282,6 @@ Fr Fr::from_hex(const std::string& hex) {
 }
 
 Fr Fr::conditional_select(bool condition, const Fr& a, const Fr& b) {
-    // Constant-time selection to avoid timing attacks
     if (USE_64BIT_DEV) {
         uint64_t mask = condition ? UINT64_MAX : 0;
         uint64_t result = (a.val & mask) | (b.val & ~mask);
@@ -407,20 +405,16 @@ std::istream& operator>>(std::istream& is, Fr& fr) {
     return is;
 }
 
-// 256-bit arithmetic implementations
-
 std::array<uint64_t, 4> Fr::add_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b) {
     std::array<uint64_t, 4> result;
     uint64_t carry = 0;
     
-    // Add limb by limb with carry
     for (int i = 0; i < 4; i++) {
         __uint128_t sum = (__uint128_t)a[i] + b[i] + carry;
         result[i] = (uint64_t)sum;
         carry = sum >> 64;
     }
     
-    // Reduce modulo BN254 prime
     reduce_256(result);
     return result;
 }
@@ -428,16 +422,14 @@ std::array<uint64_t, 4> Fr::add_256(const std::array<uint64_t, 4>& a, const std:
 std::array<uint64_t, 4> Fr::sub_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b) {
     std::array<uint64_t, 4> result;
     
-    // If a >= b, compute a - b
     if (!is_less_256(a, b)) {
         uint64_t borrow = 0;
         for (int i = 0; i < 4; i++) {
             __uint128_t diff = (__uint128_t)a[i] - b[i] - borrow;
             result[i] = (uint64_t)diff;
-            borrow = (diff >> 64) & 1; // Extract borrow bit
+            borrow = (diff >> 64) & 1;
         }
     } else {
-        // If a < b, compute p - (b - a) where p is BN254 modulus
         uint64_t borrow = 0;
         for (int i = 0; i < 4; i++) {
             __uint128_t diff = (__uint128_t)b[i] - a[i] - borrow;
@@ -445,7 +437,6 @@ std::array<uint64_t, 4> Fr::sub_256(const std::array<uint64_t, 4>& a, const std:
             borrow = (diff >> 64) & 1;
         }
         
-        // Subtract from modulus: p - result
         borrow = 0;
         for (int i = 0; i < 4; i++) {
             __uint128_t diff = (__uint128_t)bn254_fr::MODULUS_BN254[i] - result[i] - borrow;
@@ -458,7 +449,6 @@ std::array<uint64_t, 4> Fr::sub_256(const std::array<uint64_t, 4>& a, const std:
 }
 
 std::array<uint64_t, 4> Fr::neg_256(const std::array<uint64_t, 4>& a) {
-    // Compute p - a where p is BN254 modulus
     std::array<uint64_t, 4> result;
     uint64_t borrow = 0;
     
@@ -472,10 +462,8 @@ std::array<uint64_t, 4> Fr::neg_256(const std::array<uint64_t, 4>& a) {
 }
 
 std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b) {
-    // Schoolbook multiplication for 256-bit numbers
-    std::array<uint64_t, 8> product = {0}; // 512-bit result
+    std::array<uint64_t, 8> product = {0};
     
-    // Multiply a * b into 512-bit product
     for (int i = 0; i < 4; i++) {
         uint64_t carry = 0;
         for (int j = 0; j < 4; j++) {
@@ -486,12 +474,9 @@ std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std:
         product[i + 4] = carry;
     }
     
-    // Reduce 512-bit product modulo BN254 prime using repeated subtraction
     while (true) {
-        // Check if product >= modulus
         bool greater_or_equal = false;
         
-        // First check if any upper 256 bits are set
         for (int i = 4; i < 8; i++) {
             if (product[i] != 0) {
                 greater_or_equal = true;
@@ -499,20 +484,15 @@ std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std:
             }
         }
         
-        // If no upper bits set, compare lower 256 bits with modulus
         if (!greater_or_equal) {
-            // Compare from most significant to least significant
             for (int i = 3; i >= 0; i--) {
                 if (product[i] > bn254_fr::MODULUS_BN254[i]) {
                     greater_or_equal = true;
                     break;
                 } else if (product[i] < bn254_fr::MODULUS_BN254[i]) {
-                    // product < modulus, we're done
                     break;
                 }
-                // If equal, continue to next limb
             }
-            // If we reach here, all limbs are equal, so product == modulus
             if (!greater_or_equal) {
                 bool exactly_equal = true;
                 for (int i = 0; i < 4; i++) {
@@ -528,10 +508,9 @@ std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std:
         }
         
         if (!greater_or_equal) {
-            break; // product < modulus, reduction complete
+            break;
         }
         
-        // Subtract modulus from the 512-bit product
         uint64_t borrow = 0;
         for (int i = 0; i < 4; i++) {
             __uint128_t diff = (__uint128_t)product[i] - bn254_fr::MODULUS_BN254[i] - borrow;
@@ -539,14 +518,12 @@ std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std:
             borrow = (diff >> 64) & 1;
         }
         
-        // Propagate borrow to upper bits
         for (int i = 4; i < 8 && borrow; i++) {
             if (product[i] >= borrow) {
                 product[i] -= borrow;
                 borrow = 0;
             } else {
                 product[i] = UINT64_MAX;
-                // borrow remains 1 for next iteration
             }
         }
     }
@@ -565,27 +542,22 @@ std::array<uint64_t, 4> Fr::pow_256(const std::array<uint64_t, 4>& base, const s
     std::array<uint64_t, 4> result = {1, 0, 0, 0};
     std::array<uint64_t, 4> base_copy = base;
     
-    // Binary exponentiation for 256-bit exponent - process from MSB to LSB
-    // Start from the highest non-zero limb
     int start_limb = 3;
     while (start_limb >= 0 && exp[start_limb] == 0) start_limb--;
     
     if (start_limb < 0) {
-        return result; // exponent is 0
+        return result;
     }
-    
-    // Find the highest bit in the highest limb
     uint64_t high_limb = exp[start_limb];
     int start_bit = 63;
     while (start_bit >= 0 && !(high_limb & (1ULL << start_bit))) start_bit--;
     
-    // Process bits from MSB to LSB
     for (int limb = start_limb; limb >= 0; limb--) {
         uint64_t exp_limb = exp[limb];
         int end_bit = (limb == start_limb) ? start_bit : 63;
         
         for (int bit = end_bit; bit >= 0; bit--) {
-            result = mul_256(result, result); // Square
+            result = mul_256(result, result);
             if (exp_limb & (1ULL << bit)) {
                 result = mul_256(result, base_copy);
             }
@@ -600,25 +572,16 @@ std::array<uint64_t, 4> Fr::inv_256(const std::array<uint64_t, 4>& a) {
         return {0, 0, 0, 0};
     }
     
-    // Extended Euclidean Algorithm to find modular inverse
-    // We compute: gcd(a, p) = 1 = u*a + v*p, thus a^(-1) = u (mod p)
-    
-    // Initialize variables for extended Euclidean algorithm
-    std::array<uint64_t, 4> old_r = a;                      // a
-    std::array<uint64_t, 4> r = bn254_fr::MODULUS_BN254;    // p
-    std::array<int64_t, 4> old_s = {1, 0, 0, 0};            // u = 1
-    std::array<int64_t, 4> s = {0, 0, 0, 0};                // v = 0
-    
-    // For simplicity and performance, let's use a simpler approach
-    // For debugging, use a very simple approach for small values
+    std::array<uint64_t, 4> old_r = a;
+    std::array<uint64_t, 4> r = bn254_fr::MODULUS_BN254;
+    std::array<int64_t, 4> old_s = {1, 0, 0, 0};
+    std::array<int64_t, 4> s = {0, 0, 0, 0};
     if (a[1] == 0 && a[2] == 0 && a[3] == 0) {
         uint64_t val = a[0];
         if (val == 0) return {0, 0, 0, 0};
         if (val == 1) return {1, 0, 0, 0};
         
-        // For val = 2, we know that 2^(-1) = (p+1)/2
         if (val == 2) {
-            // (p+1)/2 for BN254 - calculated correctly
             return {
                 0xa1f0fac9f8000001ULL,
                 0x9419f4243cdcb848ULL,
@@ -626,20 +589,13 @@ std::array<uint64_t, 4> Fr::inv_256(const std::array<uint64_t, 4>& a) {
                 0x183227397098d014ULL
             };
         }
-        
-        // For other small values, fall through to general algorithm
     }
     
-    // For larger numbers, implement a simplified binary extended Euclidean algorithm
-    // This is a placeholder - for production use, implement full 256-bit version
-    
-    // Binary GCD-based approach for 256-bit numbers
     std::array<uint64_t, 4> u = a;
     std::array<uint64_t, 4> v = bn254_fr::MODULUS_BN254;
     std::array<uint64_t, 4> x1 = {1, 0, 0, 0};
     std::array<uint64_t, 4> x2 = {0, 0, 0, 0};
     
-    // Simple iterative approach (not optimized)
     for (int iter = 0; iter < 1000 && !is_zero_256(v); iter++) {
         if (is_even_256(u)) {
             u = div2_256(u);
@@ -669,7 +625,6 @@ std::array<uint64_t, 4> Fr::inv_256(const std::array<uint64_t, 4>& a) {
         return x1;
     }
     
-    // Fallback - return identity (this should not happen for valid inputs)
     return {1, 0, 0, 0};
 }
 
@@ -689,12 +644,11 @@ void Fr::reduce_256(std::array<uint64_t, 4>& a) {
 }
 
 bool Fr::is_less_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b) {
-    // Compare a < b
     for (int i = 3; i >= 0; i--) {
         if (a[i] < b[i]) return true;
         if (a[i] > b[i]) return false;
     }
-    return false; // a == b
+    return false;
 }
 
 bool Fr::is_zero_256(const std::array<uint64_t, 4>& a) {
@@ -702,8 +656,7 @@ bool Fr::is_zero_256(const std::array<uint64_t, 4>& a) {
 }
 
 std::array<uint64_t, 4> Fr::pow_256(const std::array<uint64_t, 4>& base, uint64_t exp) {
-    // Binary exponentiation for 256-bit numbers
-    std::array<uint64_t, 4> result = {1, 0, 0, 0}; // Start with 1
+    std::array<uint64_t, 4> result = {1, 0, 0, 0};
     std::array<uint64_t, 4> base_copy = base;
     
     while (exp > 0) {
@@ -738,7 +691,6 @@ std::array<uint64_t, 4> Fr::div2_256(const std::array<uint64_t, 4>& a) {
 }
 
 std::array<uint64_t, 4> Fr::sub_256_signed(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b) {
-    // Compute a - b mod p (handling potential negative results)
     std::array<uint64_t, 4> result;
     uint64_t borrow = 0;
     
@@ -748,7 +700,6 @@ std::array<uint64_t, 4> Fr::sub_256_signed(const std::array<uint64_t, 4>& a, con
         borrow = (diff >> 64) & 1;
     }
     
-    // If result is negative (borrow != 0), add modulus to make it positive
     if (borrow) {
         result = add_256(result, bn254_fr::MODULUS_BN254);
     }
