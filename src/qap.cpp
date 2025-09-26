@@ -1,35 +1,202 @@
 #include "zkmini/qap.hpp"
 #include "zkmini/utils.hpp"
+#include <stdexcept>
 
 namespace zkmini {
 
-QAP::QAP() : num_variables(0), num_public(0), degree(0) {}
+//============================================================================
+// Core QAP Operations
+//============================================================================
 
-QAP QAP::from_r1cs(const R1CS& r1cs) {
-    QAP qap;
-    qap.num_variables = r1cs.num_variables();
-    qap.num_public = r1cs.public_inputs().size();
-    qap.degree = r1cs.num_constraints();
+QAP r1cs_to_qap(const R1CS& r) {
+    size_t m = r.num_constraints();
+    size_t n = r.num_variables();
     
-    // Generate evaluation domain (roots of unity)
-    // TODO: Use proper root of unity for the field
-    qap.domain.clear();
-    for (size_t i = 0; i < r1cs.num_constraints(); ++i) {
-        qap.domain.push_back(Fr(i + 1)); // Simplified: use 1, 2, 3, ...
+    QAP q(m, n);
+    
+    // Generate domain points [1, 2, ..., m]
+    q.domain_points.clear();
+    q.domain_points.reserve(m);
+    for (size_t i = 0; i < m; ++i) {
+        q.domain_points.push_back(Fr(i + 1));
     }
     
-    // Convert constraint matrices to Lagrange polynomials using new API
-    qap.A = qap.matrix_to_polynomials_new(r1cs, r1cs.A, qap.domain);
-    qap.B = qap.matrix_to_polynomials_new(r1cs, r1cs.B, qap.domain);
-    qap.C = qap.matrix_to_polynomials_new(r1cs, r1cs.C, qap.domain);
+    // For each variable i ∈ [0..n-1], construct basis polynomials
+    for (size_t i = 0; i < n; ++i) {
+        // Extract column values for this variable from each matrix
+        std::vector<Fr> vals_A = r.column_values(r.A, i);
+        std::vector<Fr> vals_B = r.column_values(r.B, i);
+        std::vector<Fr> vals_C = r.column_values(r.C, i);
+        
+        // Interpolate basis polynomials A_i(X), B_i(X), C_i(X)
+        q.A_basis[i] = Polynomial::interpolate(q.domain_points, vals_A);
+        q.B_basis[i] = Polynomial::interpolate(q.domain_points, vals_B);
+        q.C_basis[i] = Polynomial::interpolate(q.domain_points, vals_C);
+    }
     
-    // Compute vanishing polynomial Z(X)
-    qap.Z = Polynomial::vanishing_polynomial(qap.domain);
+    // Compute vanishing polynomial Z(X) = ∏(X - k) for k ∈ {1..m}
+    q.Z = Polynomial::vanishing(q.domain_points);
     
-    return qap;
+    return q;
 }
 
-QAP::QAPEvaluation QAP::evaluate_at(const Fr& x, 
+Polynomial assemble_A(const QAP& q, const std::vector<Fr>& x) {
+    ZK_ASSERT(x.size() == q.n, "Witness size mismatch");
+    ZK_ASSERT(!x.empty() && x[0] == Fr(1), "First element must be 1");
+    
+    Polynomial result = Polynomial::zero();
+    
+    for (size_t i = 0; i < q.n; ++i) {
+        if (!x[i].is_zero()) {  // Skip zero coefficients for efficiency
+            Polynomial term = Polynomial::scalar_mul(q.A_basis[i], x[i]);
+            Polynomial::add_inplace(result, term);
+        }
+    }
+    
+    result.normalize();
+    return result;
+}
+
+Polynomial assemble_B(const QAP& q, const std::vector<Fr>& x) {
+    ZK_ASSERT(x.size() == q.n, "Witness size mismatch");
+    ZK_ASSERT(!x.empty() && x[0] == Fr(1), "First element must be 1");
+    
+    Polynomial result = Polynomial::zero();
+    
+    for (size_t i = 0; i < q.n; ++i) {
+        if (!x[i].is_zero()) {  // Skip zero coefficients for efficiency
+            Polynomial term = Polynomial::scalar_mul(q.B_basis[i], x[i]);
+            Polynomial::add_inplace(result, term);
+        }
+    }
+    
+    result.normalize();
+    return result;
+}
+
+Polynomial assemble_C(const QAP& q, const std::vector<Fr>& x) {
+    ZK_ASSERT(x.size() == q.n, "Witness size mismatch");
+    ZK_ASSERT(!x.empty() && x[0] == Fr(1), "First element must be 1");
+    
+    Polynomial result = Polynomial::zero();
+    
+    for (size_t i = 0; i < q.n; ++i) {
+        if (!x[i].is_zero()) {  // Skip zero coefficients for efficiency
+            Polynomial term = Polynomial::scalar_mul(q.C_basis[i], x[i]);
+            Polynomial::add_inplace(result, term);
+        }
+    }
+    
+    result.normalize();
+    return result;
+}
+
+bool divides(const Polynomial& N, const Polynomial& D) {
+    if (D.is_zero()) {
+        throw std::invalid_argument("Division by zero polynomial");
+    }
+    
+    Polynomial Q, R;
+    Polynomial::divrem(N, D, Q, R);
+    return R.is_zero();
+}
+
+Polynomial compute_H(const Polynomial& A, const Polynomial& B, 
+                    const Polynomial& C, const Polynomial& Z) {
+    // Compute A*B - C
+    Polynomial AB = Polynomial::mul_schoolbook(A, B);
+    Polynomial numerator = Polynomial::sub(AB, C);
+    
+    // Divide by Z(X)
+    Polynomial H, remainder;
+    Polynomial::divrem(numerator, Z, H, remainder);
+    
+    if (!remainder.is_zero()) {
+        throw std::runtime_error("QAP constraint not satisfied: (A*B - C) not divisible by Z");
+    }
+    
+    return H;
+}
+
+bool qap_check(const QAP& q, const std::vector<Fr>& x) {
+    try {
+        Polynomial A = assemble_A(q, x);
+        Polynomial B = assemble_B(q, x);
+        Polynomial C = assemble_C(q, x);
+        
+        // Check if (A*B - C) is divisible by Z
+        Polynomial AB = Polynomial::mul_schoolbook(A, B);
+        Polynomial numerator = Polynomial::sub(AB, C);
+        
+        return divides(numerator, q.Z);
+    } catch (...) {
+        return false;
+    }
+}
+
+std::pair<Polynomial, Polynomial> qap_num_den(const QAP& q, const std::vector<Fr>& x) {
+    Polynomial A = assemble_A(q, x);
+    Polynomial B = assemble_B(q, x);
+    Polynomial C = assemble_C(q, x);
+    
+    Polynomial AB = Polynomial::mul_schoolbook(A, B);
+    Polynomial numerator = Polynomial::sub(AB, C);
+    
+    return {numerator, q.Z};
+}
+
+//============================================================================
+// Debug Utilities
+//============================================================================
+
+std::string debug_basis(const QAP& q, size_t i) {
+    if (i >= q.n) {
+        return "Invalid variable index";
+    }
+    
+    std::string result = "Variable " + std::to_string(i) + ":\n";
+    result += "  A_" + std::to_string(i) + "(X) = " + q.A_basis[i].to_string() + "\n";
+    result += "  B_" + std::to_string(i) + "(X) = " + q.B_basis[i].to_string() + "\n";
+    result += "  C_" + std::to_string(i) + "(X) = " + q.C_basis[i].to_string();
+    
+    return result;
+}
+
+std::string debug_domain(const QAP& q) {
+    std::string result = "Domain points: [";
+    for (size_t i = 0; i < q.domain_points.size(); ++i) {
+        if (i > 0) result += ", ";
+        result += q.domain_points[i].to_string();
+    }
+    result += "]";
+    
+    return result;
+}
+
+//============================================================================
+// Legacy Compatibility Layer
+//============================================================================
+
+QAPLegacy::QAPLegacy() : num_variables(0), num_public(0), degree(0) {}
+
+QAPLegacy QAPLegacy::from_r1cs(const R1CS& r1cs) {
+    QAP modern_qap = r1cs_to_qap(r1cs);
+    
+    QAPLegacy legacy;
+    legacy.num_variables = modern_qap.n;
+    legacy.num_public = r1cs.public_inputs().size();
+    legacy.degree = modern_qap.m;
+    
+    legacy.A = modern_qap.A_basis;
+    legacy.B = modern_qap.B_basis;
+    legacy.C = modern_qap.C_basis;
+    legacy.Z = modern_qap.Z;
+    legacy.domain = modern_qap.domain_points;
+    
+    return legacy;
+}
+
+QAPLegacy::QAPEvaluation QAPLegacy::evaluate_at(const Fr& x, 
                                    const std::vector<Fr>& public_inputs,
                                    const std::vector<Fr>& private_inputs) const {
     std::vector<Fr> assignment = generate_full_assignment(public_inputs, private_inputs);
@@ -62,8 +229,8 @@ QAP::QAPEvaluation QAP::evaluate_at(const Fr& x,
     return eval;
 }
 
-Polynomial QAP::compute_h_polynomial(const std::vector<Fr>& public_inputs,
-                                    const std::vector<Fr>& private_inputs) const {
+Polynomial QAPLegacy::compute_h_polynomial(const std::vector<Fr>& public_inputs,
+                                          const std::vector<Fr>& private_inputs) const {
     auto [A_poly, B_poly, C_poly] = compute_abc_polynomials(
         generate_full_assignment(public_inputs, private_inputs)
     );
@@ -76,8 +243,8 @@ Polynomial QAP::compute_h_polynomial(const std::vector<Fr>& public_inputs,
     return quotient;
 }
 
-bool QAP::is_satisfied(const std::vector<Fr>& public_inputs,
-                      const std::vector<Fr>& private_inputs) const {
+bool QAPLegacy::is_satisfied(const std::vector<Fr>& public_inputs,
+                           const std::vector<Fr>& private_inputs) const {
     // Check if A(X) * B(X) - C(X) = H(X) * Z(X) for all X in domain
     for (const Fr& x : domain) {
         QAPEvaluation eval = evaluate_at(x, public_inputs, private_inputs);
@@ -90,8 +257,8 @@ bool QAP::is_satisfied(const std::vector<Fr>& public_inputs,
     return true;
 }
 
-std::vector<Fr> QAP::generate_full_assignment(const std::vector<Fr>& public_inputs,
-                                            const std::vector<Fr>& private_inputs) const {
+std::vector<Fr> QAPLegacy::generate_full_assignment(const std::vector<Fr>& public_inputs,
+                                                  const std::vector<Fr>& private_inputs) const {
     std::vector<Fr> full_assignment;
     full_assignment.reserve(num_variables);
     
@@ -111,34 +278,8 @@ std::vector<Fr> QAP::generate_full_assignment(const std::vector<Fr>& public_inpu
     return full_assignment;
 }
 
-std::vector<Polynomial> QAP::matrix_to_polynomials(
-    const std::vector<std::vector<std::pair<size_t, Fr>>>& matrix,
-    const std::vector<Fr>& domain) const {
-    
-    std::vector<Polynomial> polynomials(num_variables);
-    
-    for (size_t var = 0; var < num_variables; ++var) {
-        std::vector<Fr> values(domain.size(), Fr());
-        
-        // Extract values for this variable across all constraints
-        for (size_t constraint = 0; constraint < matrix.size(); ++constraint) {
-            for (const auto& term : matrix[constraint]) {
-                if (term.first == var) {
-                    values[constraint] = term.second;
-                    break;
-                }
-            }
-        }
-        
-        // Interpolate polynomial for this variable
-        polynomials[var] = interpolate_variable(values, domain);
-    }
-    
-    return polynomials;
-}
-
 // New method to work with new R1CS API
-std::vector<Polynomial> QAP::matrix_to_polynomials_new(
+std::vector<Polynomial> QAPLegacy::matrix_to_polynomials_new(
     const R1CS& r1cs,
     const std::vector<LinearCombination>& matrix,
     const std::vector<Fr>& domain) const {
@@ -156,13 +297,13 @@ std::vector<Polynomial> QAP::matrix_to_polynomials_new(
     return polynomials;
 }
 
-Polynomial QAP::interpolate_variable(const std::vector<Fr>& values,
-                                   const std::vector<Fr>& domain) const {
+Polynomial QAPLegacy::interpolate_variable(const std::vector<Fr>& values,
+                                         const std::vector<Fr>& domain) const {
     return Polynomial::lagrange_interpolate(domain, values);
 }
 
 std::tuple<Polynomial, Polynomial, Polynomial> 
-QAP::compute_abc_polynomials(const std::vector<Fr>& assignment) const {
+QAPLegacy::compute_abc_polynomials(const std::vector<Fr>& assignment) const {
     Polynomial A_poly, B_poly, C_poly;
     
     // A(X) = Σ a_i * A_i(X)

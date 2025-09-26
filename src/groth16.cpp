@@ -128,31 +128,31 @@ void Groth16::setup_crs_elements(CRS& crs, const QAP& qap,
     crs.vk.gamma_g2 = G2::generator() * gamma;
     crs.vk.delta_g2 = crs.pk.delta_g2;
     
-    crs.pk.num_variables = qap.num_variables;
-    crs.pk.num_public = qap.num_public;
-    crs.pk.degree = qap.degree;
-    crs.vk.num_public = qap.num_public;
+    crs.pk.num_variables = qap.n;
+    crs.pk.num_public = 0; // Need to pass this separately
+    crs.pk.degree = qap.m;
+    crs.vk.num_public = 0; // Need to pass this separately
 }
 
 std::tuple<Polynomial, Polynomial, Polynomial> 
 Groth16::compute_qap_polynomials(const QAP& qap,
                                const std::vector<Fr>& public_inputs,
                                const std::vector<Fr>& private_inputs) {
-    std::vector<Fr> assignment = qap.generate_full_assignment(public_inputs, private_inputs);
-    
-    Polynomial A_poly, B_poly, C_poly;
-    
-    for (size_t i = 0; i < qap.num_variables && i < qap.A.size(); ++i) {
-        A_poly = A_poly + (qap.A[i] * assignment[i]);
+    // Create full assignment [1, public_inputs, private_inputs]
+    std::vector<Fr> assignment;
+    assignment.reserve(qap.n);
+    assignment.push_back(Fr(1)); // x0 = 1
+    for (const auto& inp : public_inputs) {
+        assignment.push_back(inp);
+    }
+    for (const auto& inp : private_inputs) {
+        assignment.push_back(inp);
     }
     
-    for (size_t i = 0; i < qap.num_variables && i < qap.B.size(); ++i) {
-        B_poly = B_poly + (qap.B[i] * assignment[i]);
-    }
-    
-    for (size_t i = 0; i < qap.num_variables && i < qap.C.size(); ++i) {
-        C_poly = C_poly + (qap.C[i] * assignment[i]);
-    }
+    // Use new QAP API
+    Polynomial A_poly = assemble_A(qap, assignment);
+    Polynomial B_poly = assemble_B(qap, assignment);
+    Polynomial C_poly = assemble_C(qap, assignment);
     
     return {A_poly, B_poly, C_poly};
 }
