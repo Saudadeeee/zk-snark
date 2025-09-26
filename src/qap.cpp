@@ -7,21 +7,21 @@ QAP::QAP() : num_variables(0), num_public(0), degree(0) {}
 
 QAP QAP::from_r1cs(const R1CS& r1cs) {
     QAP qap;
-    qap.num_variables = r1cs.num_variables;
-    qap.num_public = r1cs.num_public;
-    qap.degree = r1cs.num_constraints;
+    qap.num_variables = r1cs.num_variables();
+    qap.num_public = r1cs.public_inputs().size();
+    qap.degree = r1cs.num_constraints();
     
     // Generate evaluation domain (roots of unity)
     // TODO: Use proper root of unity for the field
     qap.domain.clear();
-    for (size_t i = 0; i < r1cs.num_constraints; ++i) {
+    for (size_t i = 0; i < r1cs.num_constraints(); ++i) {
         qap.domain.push_back(Fr(i + 1)); // Simplified: use 1, 2, 3, ...
     }
     
-    // Convert constraint matrices to Lagrange polynomials
-    qap.A = qap.matrix_to_polynomials(r1cs.A, qap.domain);
-    qap.B = qap.matrix_to_polynomials(r1cs.B, qap.domain);
-    qap.C = qap.matrix_to_polynomials(r1cs.C, qap.domain);
+    // Convert constraint matrices to Lagrange polynomials using new API
+    qap.A = qap.matrix_to_polynomials_new(r1cs, r1cs.A, qap.domain);
+    qap.B = qap.matrix_to_polynomials_new(r1cs, r1cs.B, qap.domain);
+    qap.C = qap.matrix_to_polynomials_new(r1cs, r1cs.C, qap.domain);
     
     // Compute vanishing polynomial Z(X)
     qap.Z = Polynomial::vanishing_polynomial(qap.domain);
@@ -129,6 +129,25 @@ std::vector<Polynomial> QAP::matrix_to_polynomials(
                 }
             }
         }
+        
+        // Interpolate polynomial for this variable
+        polynomials[var] = interpolate_variable(values, domain);
+    }
+    
+    return polynomials;
+}
+
+// New method to work with new R1CS API
+std::vector<Polynomial> QAP::matrix_to_polynomials_new(
+    const R1CS& r1cs,
+    const std::vector<LinearCombination>& matrix,
+    const std::vector<Fr>& domain) const {
+    
+    std::vector<Polynomial> polynomials(num_variables);
+    
+    for (size_t var = 0; var < num_variables; ++var) {
+        // Use R1CS column_values method to extract coefficients for this variable
+        std::vector<Fr> values = r1cs.column_values(matrix, var);
         
         // Interpolate polynomial for this variable
         polynomials[var] = interpolate_variable(values, domain);

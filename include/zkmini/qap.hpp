@@ -54,9 +54,15 @@ public:
                                            const std::vector<Fr>& private_inputs) const;
 
 private:
-    // Convert constraint matrix to Lagrange polynomials
+    // Convert constraint matrix to Lagrange polynomials (legacy API)
     std::vector<Polynomial> matrix_to_polynomials(
         const std::vector<std::vector<std::pair<size_t, Fr>>>& matrix,
+        const std::vector<Fr>& domain) const;
+    
+    // Convert constraint matrix to Lagrange polynomials (new API)
+    std::vector<Polynomial> matrix_to_polynomials_new(
+        const R1CS& r1cs,
+        const std::vector<LinearCombination>& matrix,
         const std::vector<Fr>& domain) const;
     
     // Lagrange interpolation for a single variable across all constraints

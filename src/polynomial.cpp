@@ -55,14 +55,12 @@ void Polynomial::set_coeff(size_t i, const Fr& v) {
     normalize();
 }
 
-// Normalization
 void Polynomial::normalize() {
     while (!coeffs.empty() && coeffs.back().is_zero()) {
         coeffs.pop_back();
     }
 }
 
-// Basic arithmetic operations
 Polynomial Polynomial::add(const Polynomial& a, const Polynomial& b) {
     size_t max_size = std::max(a.coeffs.size(), b.coeffs.size());
     std::vector<Fr> result;
@@ -146,6 +144,9 @@ void Polynomial::scalar_mul_inplace(Polynomial& f, const Fr& k) {
     for (Fr& coeff : f.coeffs) {
         coeff = coeff * k;
     }
+    
+    // Normalize to handle case where leading coefficients become zero
+    f.normalize();
 }
 
 // Polynomial multiplication
