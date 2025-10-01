@@ -14,9 +14,32 @@ Random::Random(uint64_t seed) : uint64_dist(0, UINT64_MAX), byte_dist(0, 255) {
 }
 
 Fr Random::random_fr() {
-    // TODO: Generate random field element in range [0, Fr::MODULUS)
-    // For now, just return random 64-bit value
-    return Fr(uint64_dist(rng));
+    // Generate random field element in range [0, Fr::MODULUS)
+    if constexpr (Fr::USE_64BIT_DEV) {
+        // For development mode, use simple 64-bit generation
+        uint64_t val = uint64_dist(rng);
+        if (val >= Fr::MODULUS) {
+            val %= Fr::MODULUS;
+        }
+        return Fr(val);
+    } else {
+        // For full 256-bit mode, generate proper random element
+        std::array<uint64_t, 4> limbs;
+        do {
+            for (int i = 0; i < 4; i++) {
+                limbs[i] = uint64_dist(rng);
+            }
+            // Reduce if >= modulus
+        } while (limbs[3] > bn254_fr::MODULUS_BN254[3] || 
+                (limbs[3] == bn254_fr::MODULUS_BN254[3] && 
+                 (limbs[2] > bn254_fr::MODULUS_BN254[2] ||
+                  (limbs[2] == bn254_fr::MODULUS_BN254[2] &&
+                   (limbs[1] > bn254_fr::MODULUS_BN254[1] ||
+                    (limbs[1] == bn254_fr::MODULUS_BN254[1] &&
+                     limbs[0] >= bn254_fr::MODULUS_BN254[0]))))));
+        
+        return Fr(limbs);
+    }
 }
 
 std::vector<Fr> Random::random_fr_vector(size_t count) {

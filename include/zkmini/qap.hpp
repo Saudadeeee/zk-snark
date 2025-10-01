@@ -169,4 +169,4 @@ private:
     compute_abc_polynomials(const std::vector<Fr>& assignment) const;
 };
 
-} // namespace zkmini
+} 

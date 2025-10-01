@@ -1,5 +1,6 @@
 #include "zkmini/r1cs.hpp"
 #include "zkmini/utils.hpp"
+#include "zkmini/serialization.hpp"
 #include <sstream>
 #include <algorithm>
 #include <unordered_map>
@@ -273,25 +274,114 @@ std::vector<Fr> R1CS::generate_full_assignment(const std::vector<Fr>& public_inp
     return full_assignment;
 }
 
-// Serialization (TODO: implement properly)
+// R1CS Serialization
 std::vector<uint8_t> R1CS::serialize() const {
-    // TODO: Implement binary serialization
-    return {};
+    std::vector<uint8_t> result;
+    
+    // Write dimensions
+    Serialization::write_uint64(result, n_vars);
+    Serialization::write_uint64(result, n_cons);
+    
+    // Write matrices
+    auto A_data = serialize_matrix(A);
+    auto B_data = serialize_matrix(B);
+    auto C_data = serialize_matrix(C);
+    
+    Serialization::write_uint64(result, A_data.size());
+    result.insert(result.end(), A_data.begin(), A_data.end());
+    
+    Serialization::write_uint64(result, B_data.size());
+    result.insert(result.end(), B_data.begin(), B_data.end());
+    
+    Serialization::write_uint64(result, C_data.size());
+    result.insert(result.end(), C_data.begin(), C_data.end());
+    
+    return result;
 }
 
 R1CS R1CS::deserialize(const std::vector<uint8_t>& data) {
-    // TODO: Implement binary deserialization
-    return R1CS();
+    size_t offset = 0;
+    
+    // Read dimensions
+    uint64_t n_vars = Serialization::read_uint64(data, offset);
+    uint64_t n_cons = Serialization::read_uint64(data, offset);
+    
+    R1CS result;
+    result.n_vars = n_vars;
+    result.n_cons = n_cons;
+    
+    // Read matrices
+    uint64_t A_size = Serialization::read_uint64(data, offset);
+    std::vector<uint8_t> A_data(data.begin() + offset, data.begin() + offset + A_size);
+    offset += A_size;
+    
+    uint64_t B_size = Serialization::read_uint64(data, offset);
+    std::vector<uint8_t> B_data(data.begin() + offset, data.begin() + offset + B_size);
+    offset += B_size;
+    
+    uint64_t C_size = Serialization::read_uint64(data, offset);
+    std::vector<uint8_t> C_data(data.begin() + offset, data.begin() + offset + C_size);
+    
+    size_t A_offset = 0, B_offset = 0, C_offset = 0;
+    result.A = deserialize_matrix(A_data, A_offset);
+    result.B = deserialize_matrix(B_data, B_offset);
+    result.C = deserialize_matrix(C_data, C_offset);
+    
+    return result;
 }
 
 R1CS R1CS::from_json(const std::string& json_str) {
-    // TODO: Implement JSON deserialization
-    return R1CS();
+    // Simplified JSON parsing - in practice you'd use a proper JSON library
+    R1CS result;
+    
+    // For now, return empty R1CS - full JSON parsing would be quite complex
+    // This is a placeholder that maintains the interface
+    result.n_vars = 0;
+    result.n_cons = 0;
+    
+    return result;
 }
 
 std::string R1CS::to_json() const {
-    // TODO: Implement JSON serialization
-    return "{}";
+    std::string result = "{";
+    result += "\"n_vars\":" + std::to_string(n_vars) + ",";
+    result += "\"n_cons\":" + std::to_string(n_cons) + ",";
+    result += "\"A\":[";
+    
+    for (size_t i = 0; i < A.size(); ++i) {
+        if (i > 0) result += ",";
+        result += "[";
+        for (size_t j = 0; j < A[i].size(); ++j) {
+            if (j > 0) result += ",";
+            result += "{\"var\":" + std::to_string(A[i][j].idx) + ",\"coeff\":\"" + A[i][j].coeff.to_hex() + "\"}";
+        }
+        result += "]";
+    }
+    
+    result += "],\"B\":[";
+    for (size_t i = 0; i < B.size(); ++i) {
+        if (i > 0) result += ",";
+        result += "[";
+        for (size_t j = 0; j < B[i].size(); ++j) {
+            if (j > 0) result += ",";
+            result += "{\"var\":" + std::to_string(B[i][j].idx) + ",\"coeff\":\"" + B[i][j].coeff.to_hex() + "\"}";
+        }
+        result += "]";
+    }
+    
+    result += "],\"C\":[";
+    for (size_t i = 0; i < C.size(); ++i) {
+        if (i > 0) result += ",";
+        result += "[";
+        for (size_t j = 0; j < C[i].size(); ++j) {
+            if (j > 0) result += ",";
+            result += "{\"var\":" + std::to_string(C[i][j].idx) + ",\"coeff\":\"" + C[i][j].coeff.to_hex() + "\"}";
+        }
+        result += "]";
+    }
+    
+    result += "]}";
+    return result;
 }
 
 void R1CS::validate_constraint_index(size_t constraint_idx) const {
@@ -300,6 +390,43 @@ void R1CS::validate_constraint_index(size_t constraint_idx) const {
 
 void R1CS::validate_variable_index(VarIdx var_idx) const {
     ZK_ASSERT(var_idx < n_vars, "Variable index out of bounds");
+}
+
+std::vector<uint8_t> R1CS::serialize_matrix(const std::vector<std::vector<Term>>& matrix) const {
+    std::vector<uint8_t> result;
+    
+    Serialization::write_uint64(result, matrix.size());
+    for (const auto& row : matrix) {
+        Serialization::write_uint64(result, row.size());
+        for (const auto& term : row) {
+            Serialization::write_uint64(result, term.idx);
+            auto coeff_data = Serialization::serialize_fr(term.coeff);
+            result.insert(result.end(), coeff_data.begin(), coeff_data.end());
+        }
+    }
+    
+    return result;
+}
+
+std::vector<std::vector<Term>> R1CS::deserialize_matrix(const std::vector<uint8_t>& data, size_t& offset) {
+    uint64_t rows = Serialization::read_uint64(data, offset);
+    std::vector<std::vector<Term>> matrix;
+    matrix.reserve(rows);
+    
+    for (size_t i = 0; i < rows; ++i) {
+        uint64_t cols = Serialization::read_uint64(data, offset);
+        std::vector<Term> row;
+        row.reserve(cols);
+        
+        for (size_t j = 0; j < cols; ++j) {
+            VarIdx idx = Serialization::read_uint64(data, offset);
+            Fr coeff = Serialization::deserialize_fr(data, offset);
+            row.emplace_back(idx, coeff);
+        }
+        matrix.push_back(std::move(row));
+    }
+    
+    return matrix;
 }
 
 } // namespace zkmini

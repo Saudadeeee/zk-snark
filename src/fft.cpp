@@ -32,8 +32,30 @@ std::vector<Fr> FFT::ifft(const std::vector<Fr>& evals) const {
 }
 
 Polynomial FFT::multiply(const Polynomial& a, const Polynomial& b) {
-    // TODO: Implement FFT-based polynomial multiplication
-    return Polynomial();
+    if (a.coeffs.empty() || b.coeffs.empty()) {
+        return Polynomial();
+    }
+    
+    size_t result_size = a.coeffs.size() + b.coeffs.size() - 1;
+    size_t fft_size = 1;
+    while (fft_size < result_size) {
+        fft_size <<= 1;
+    }
+    
+    FFT fft_mul(fft_size);
+    
+    std::vector<Fr> a_evals = fft_mul.fft(a.coeffs);
+    std::vector<Fr> b_evals = fft_mul.fft(b.coeffs);
+    
+    std::vector<Fr> c_evals(fft_size);
+    for (size_t i = 0; i < fft_size; ++i) {
+        c_evals[i] = a_evals[i] * b_evals[i];
+    }
+    
+    std::vector<Fr> result_coeffs = fft_mul.ifft(c_evals);
+    result_coeffs.resize(result_size);
+    
+    return Polynomial(result_coeffs);
 }
 
 std::vector<Fr> FFT::evaluate_on_domain(const Polynomial& poly) const {
@@ -62,19 +84,27 @@ void FFT::compute_domain() {
 }
 
 void FFT::compute_twiddles() {
-    // TODO: Precompute twiddle factors for optimization
+    twiddles.clear();
+    twiddles.reserve(domain_size);
+    
+    Fr w = root_of_unity;
+    Fr current = Fr(1);
+    
+    for (size_t i = 0; i < domain_size; ++i) {
+        twiddles.push_back(current);
+        current = current * w;
+    }
 }
 
 void FFT::fft_in_place(std::vector<Fr>& a, bool inverse) const {
-    // TODO: Implement in-place Cooley-Tukey FFT
     bit_reverse(a);
     
     Fr w = inverse ? inv_root_of_unity : root_of_unity;
     
     for (size_t len = 2; len <= domain_size; len <<= 1) {
-        Fr wlen = w;
-        for (size_t i = len; i < domain_size; i <<= 1) {
-            wlen = wlen * wlen;
+        Fr wlen = Fr(1);
+        for (size_t i = 0; i < domain_size / len; ++i) {
+            wlen = wlen * w;
         }
         
         for (size_t i = 0; i < domain_size; i += len) {
@@ -91,7 +121,6 @@ void FFT::fft_in_place(std::vector<Fr>& a, bool inverse) const {
 }
 
 void FFT::bit_reverse(std::vector<Fr>& a) const {
-    // TODO: Implement bit reversal permutation
     size_t n = a.size();
     for (size_t i = 1, j = 0; i < n; ++i) {
         size_t bit = n >> 1;
@@ -106,8 +135,16 @@ void FFT::bit_reverse(std::vector<Fr>& a) const {
 }
 
 Fr FFT::find_root_of_unity(size_t n) {
-    // TODO: Find primitive n-th root of unity in Fr
-    return Fr();
+    // For BN254 field, use a known primitive root
+    // This is a simplification - in practice you'd compute this properly
+    Fr generator = Fr(5); // Generator of multiplicative group
+    
+    // Find order of field - 1
+    Fr field_order_minus_1 = Fr(0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000000ULL);
+    
+    // Compute g^((p-1)/n) for primitive n-th root
+    Fr exponent = field_order_minus_1 / Fr(n);
+    return generator.pow(exponent);
 }
 
 } // namespace zkmini

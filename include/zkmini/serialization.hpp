@@ -51,12 +51,17 @@ public:
     static std::vector<uint8_t> serialize_g2_compressed(const G2& point);
     static G2 deserialize_g2_compressed(const std::vector<uint8_t>& data, size_t& offset);
 
-private:
-    // Little-endian integer serialization
-    static void write_uint32(std::vector<uint8_t>& data, uint32_t value);
+    // Helper functions for binary serialization
     static void write_uint64(std::vector<uint8_t>& data, uint64_t value);
-    static uint32_t read_uint32(const std::vector<uint8_t>& data, size_t& offset);
+    static void write_uint32(std::vector<uint8_t>& data, uint32_t value);
     static uint64_t read_uint64(const std::vector<uint8_t>& data, size_t& offset);
+    static uint32_t read_uint32(const std::vector<uint8_t>& data, size_t& offset);
+    
+    // Field element helpers
+    static std::vector<uint8_t> serialize_fq(const Fq& element);
+    static Fq deserialize_fq(const std::vector<uint8_t>& data, size_t& offset);
+    static std::vector<uint8_t> serialize_fq2(const Fq2& element);
+    static Fq2 deserialize_fq2(const std::vector<uint8_t>& data, size_t& offset);
     
     // Size helpers
     static constexpr size_t FR_SIZE = 32;  // 256 bits

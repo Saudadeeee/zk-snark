@@ -8,15 +8,15 @@
 
 ```cpp
 struct QAP {
-    size_t m;  // số ràng buộc (domain size)
-    size_t n;  // số biến (including x₀ = 1)
+    size_t m;  
+    size_t n; 
     
-    std::vector<Polynomial> A_basis;  // A_basis[i] = Aᵢ(X)
-    std::vector<Polynomial> B_basis;  // B_basis[i] = Bᵢ(X) 
-    std::vector<Polynomial> C_basis;  // C_basis[i] = Cᵢ(X)
+    std::vector<Polynomial> A_basis;  
+    std::vector<Polynomial> B_basis;  
+    std::vector<Polynomial> C_basis;  
     
-    Polynomial Z;  // Z(X) = (X-1)(X-2)...(X-m)
-    std::vector<Fr> domain_points;  // [1, 2, ..., m]
+    Polynomial Z;  
+    std::vector<Fr> domain_points;  
 };
 ```
 

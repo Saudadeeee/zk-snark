@@ -101,6 +101,10 @@ private:
     
     void validate_constraint_index(size_t constraint_idx) const;
     void validate_variable_index(VarIdx var_idx) const;
+    
+    // Serialization helpers
+    std::vector<uint8_t> serialize_matrix(const std::vector<std::vector<Term>>& matrix) const;
+    static std::vector<std::vector<Term>> deserialize_matrix(const std::vector<uint8_t>& data, size_t& offset);
 };
 
 } // namespace zkmini

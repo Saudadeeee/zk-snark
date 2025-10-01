@@ -37,7 +37,7 @@ private:
     static Fq12 line_add(G2& R, const G2& Q, const G1& P);
     
     // BN254 specific parameters
-    static constexpr uint64_t ATE_LOOP_COUNT = 0x19d797039be763ba8ULL;
+    static constexpr uint64_t ATE_LOOP_COUNT = 0x9d797039be763ba8ULL;
     static constexpr bool ATE_IS_LOOP_COUNT_NEG = false;
 };
 

@@ -28,10 +28,10 @@ int main(int argc, char* argv[]) {
         // r1cs = R1CS::load_from_file(r1cs_file);
         
         std::cout << "Converting R1CS to QAP..." << std::endl;
-        QAP qap = QAP::from_r1cs(r1cs);
+        QAP qap = r1cs_to_qap(r1cs);
         
         std::cout << "Generating trusted setup..." << std::endl;
-        CRS crs = Groth16::setup(qap);
+        CRS crs = Groth16::setup(r1cs);
         
         std::cout << "Saving proving key to: " << pk_file << std::endl;
         crs.pk.save_to_file(pk_file);
@@ -41,9 +41,9 @@ int main(int argc, char* argv[]) {
         
         std::cout << "Setup completed successfully!" << std::endl;
         std::cout << "QAP info:" << std::endl;
-        std::cout << "  Variables: " << qap.num_variables << std::endl;
-        std::cout << "  Public inputs: " << qap.num_public << std::endl;
-        std::cout << "  Constraints: " << qap.degree << std::endl;
+        std::cout << "  Variables: " << qap.n << std::endl;
+        std::cout << "  Public inputs: " << r1cs.public_inputs().size() << std::endl;
+        std::cout << "  Constraints: " << qap.m << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

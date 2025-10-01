@@ -28,6 +28,7 @@ public:
     size_t size() const;
     const Fr& coeff(size_t i) const; // Returns 0 if i >= size
     void set_coeff(size_t i, const Fr& v); // Auto-grow, assign, normalize if needed
+    const std::vector<Fr>& coefficients() const { return coeffs; } // Access to coefficients
     
     // Normalization
     void normalize();

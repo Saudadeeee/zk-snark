@@ -3,16 +3,17 @@
 #include "keys.hpp"
 #include "qap.hpp"
 #include "pairing.hpp"
+#include "r1cs.hpp"
+#include "msm.hpp"
 #include <vector>
 
 namespace zkmini {
 
-// Placeholder for Groth16 proof
-// TODO: Implement Groth16 proof structure
+// Groth16 Proof structure
 struct Proof {
-    G1 A; // [A]_1
-    G2 B; // [B]_2  
-    G1 C; // [C]_1
+    G1 A; // π_A
+    G2 B; // π_B  
+    G1 C; // π_C
     
     Proof();
     Proof(const G1& A, const G2& B, const G1& C);
@@ -29,53 +30,29 @@ struct Proof {
     static Proof from_json(const std::string& json_str);
 };
 
-// Placeholder for Groth16 protocol implementation
-// TODO: Implement setup, prove, verify algorithms
+// Groth16 Protocol Implementation
 class Groth16 {
 public:
-    // Trusted setup: generate CRS from QAP
-    static CRS setup(const QAP& qap);
+    // Main API
+    static CRS setup(const R1CS& r1cs);
+    static Proof prove(const ProvingKey& pk, const QAP& qap, const std::vector<Fr>& full_witness);
+    static bool verify(const VerifyingKey& vk, const std::vector<Fr>& public_inputs, const Proof& proof);
     
-    // Generate proof from witness
-    static Proof prove(const ProvingKey& pk,
-                      const QAP& qap,
-                      const std::vector<Fr>& public_inputs,
-                      const std::vector<Fr>& private_inputs);
-    
-    // Verify proof
-    static bool verify(const VerifyingKey& vk,
-                      const std::vector<Fr>& public_inputs,
-                      const Proof& proof);
-    
-    // End-to-end: setup, prove, verify
-    static bool test_circuit(const QAP& qap,
-                           const std::vector<Fr>& public_inputs,
-                           const std::vector<Fr>& private_inputs);
+    // End-to-end test
+    static bool test_circuit(const R1CS& r1cs, const std::vector<Fr>& public_inputs, const std::vector<Fr>& private_inputs);
 
 private:
-    // Helper functions for setup
-    static void setup_crs_elements(CRS& crs, const QAP& qap,
-                                  const Fr& tau, const Fr& alpha, 
-                                  const Fr& beta, const Fr& gamma, const Fr& delta);
+    // Setup helpers
+    static void setup_crs_elements(CRS& crs, const QAP& qap, const R1CS& r1cs,
+                                  const Fr& tau, const Fr& alpha, const Fr& beta, 
+                                  const Fr& gamma, const Fr& delta);
     
-    // Helper functions for proving
-    static std::tuple<Polynomial, Polynomial, Polynomial> 
-    compute_qap_polynomials(const QAP& qap,
-                           const std::vector<Fr>& public_inputs,
-                           const std::vector<Fr>& private_inputs);
+    // Proving helpers  
+    static Polynomial compute_h_polynomial(const QAP& qap, const std::vector<Fr>& full_witness);
     
-    static Polynomial compute_h_polynomial(const QAP& qap,
-                                          const Polynomial& A_poly,
-                                          const Polynomial& B_poly,
-                                          const Polynomial& C_poly);
-    
-    // Helper functions for verification
-    static G1 compute_vk_gamma_abc(const VerifyingKey& vk,
-                                  const std::vector<Fr>& public_inputs);
-    
-    static bool verify_pairing_equation(const VerifyingKey& vk,
-                                       const G1& vk_gamma_abc,
-                                       const Proof& proof);
+    // Verification helpers
+    static G1 compute_vk_ic(const VerifyingKey& vk, const std::vector<Fr>& public_inputs);
+    static bool verify_pairing_equation(const VerifyingKey& vk, const G1& vk_ic, const Proof& proof);
 };
 
 } // namespace zkmini

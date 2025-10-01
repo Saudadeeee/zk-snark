@@ -4,11 +4,11 @@
 
 namespace zkmini {
 
-// Placeholder for Fq2 = Fq[u]/(u^2 + 1) extension field
-// TODO: Implement Fq2 quadratic extension field
 class Fq2 {
 public:
-    Fq c0, c1; // c0 + c1*u
+    static const Fq NON_RESIDUE;
+    
+    Fq c0, c1;
     
     Fq2();
     Fq2(const Fq& c0, const Fq& c1);
@@ -19,13 +19,14 @@ public:
     
     bool operator==(const Fq2& other) const;
     bool is_zero() const;
+    bool is_one() const;
     
     Fq2 inverse() const;
     Fq2 square() const;
     Fq2 conjugate() const;
     
-    // Frobenius map
     Fq2 frobenius_map(uint64_t power) const;
+    Fq2 mul_by_nonresidue() const;
 };
 
 } // namespace zkmini

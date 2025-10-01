@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
         ProvingKey pk = ProvingKey::load_from_file(pk_file);
         
         std::cout << "Converting R1CS to QAP..." << std::endl;
-        QAP qap = QAP::from_r1cs(r1cs);
+        QAP qap = r1cs_to_qap(r1cs);
         
         std::cout << "Parsing witness..." << std::endl;
         std::vector<Fr> public_inputs = parse_witness(public_str);
@@ -64,8 +64,11 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         
+        // Generate full witness
+        std::vector<Fr> full_witness = r1cs.generate_full_assignment(public_inputs, private_inputs);
+        
         std::cout << "Generating proof..." << std::endl;
-        Proof proof = Groth16::prove(pk, qap, public_inputs, private_inputs);
+        Proof proof = Groth16::prove(pk, qap, full_witness);
         
         std::cout << "Saving proof to: " << proof_file << std::endl;
         proof.save_to_file(proof_file);
