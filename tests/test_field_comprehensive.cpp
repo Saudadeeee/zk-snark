@@ -27,7 +27,7 @@ void test_field_group_properties() {
         
         // Commutativity: a + b = b + a
         if (!((a + b) == (b + a))) {
-            std::cerr << "❌ Addition commutativity failed for a=" << a.to_hex() 
+            std::cerr << "Addition commutativity failed for a=" << a.to_hex() 
                       << ", b=" << b.to_hex() << std::endl;
             continue;
         }
@@ -36,20 +36,20 @@ void test_field_group_properties() {
         Fr left = a + (b + c);
         Fr right = (a + b) + c;
         if (!(left == right)) {
-            std::cerr << "❌ Addition associativity failed" << std::endl;
+            std::cerr << "Addition associativity failed" << std::endl;
             continue;
         }
         
         // Identity: a + 0 = a
         if (!((a + Fr::zero()) == a)) {
-            std::cerr << "❌ Addition identity failed for a=" << a.to_hex() << std::endl;
+            std::cerr << "Addition identity failed for a=" << a.to_hex() << std::endl;
             continue;
         }
         
         // Inverse: a + (-a) = 0
         Fr neg_a = -a;
         if (!((a + neg_a) == Fr::zero())) {
-            std::cerr << "❌ Addition inverse failed for a=" << a.to_hex() << std::endl;
+            std::cerr << "Addition inverse failed for a=" << a.to_hex() << std::endl;
             continue;
         }
         
@@ -75,7 +75,7 @@ void test_field_ring_properties() {
         
         // Commutativity: a * b = b * a
         if (!((a * b) == (b * a))) {
-            std::cerr << "❌ Multiplication commutativity failed" << std::endl;
+            std::cerr << "Multiplication commutativity failed" << std::endl;
             continue;
         }
         
@@ -83,13 +83,13 @@ void test_field_ring_properties() {
         Fr left = a * (b * c);
         Fr right = (a * b) * c;
         if (!(left == right)) {
-            std::cerr << "❌ Multiplication associativity failed" << std::endl;
+            std::cerr << "Multiplication associativity failed" << std::endl;
             continue;
         }
         
         // Identity: a * 1 = a
         if (!((a * Fr::one()) == a)) {
-            std::cerr << "❌ Multiplication identity failed" << std::endl;
+            std::cerr << "Multiplication identity failed" << std::endl;
             continue;
         }
         
@@ -117,7 +117,7 @@ void test_field_division_properties() {
             Fr a_inv = a.inverse();
             Fr product = a * a_inv;
             if (!(product == Fr::one())) {
-                std::cerr << "❌ Multiplicative inverse failed for a=" << a.to_hex() 
+                std::cerr << "Multiplicative inverse failed for a=" << a.to_hex() 
                           << ", a_inv=" << a_inv.to_hex() 
                           << ", product=" << product.to_hex() << std::endl;
                 continue;
@@ -129,7 +129,7 @@ void test_field_division_properties() {
             Fr quotient = a / b;
             Fr reconstructed = quotient * b;
             if (!(reconstructed == a)) {
-                std::cerr << "❌ Division property failed" << std::endl;
+                std::cerr << "Division property failed" << std::endl;
                 continue;
             }
         }
@@ -159,7 +159,7 @@ void test_distributive_property() {
         Fr right = (a * b) + (a * c);
         
         if (!(left == right)) {
-            std::cerr << "❌ Distributive property failed" << std::endl;
+            std::cerr << "Distributive property failed" << std::endl;
             if (VERBOSE) {
                 std::cerr << "   a=" << a.to_hex() << std::endl;
                 std::cerr << "   b=" << b.to_hex() << std::endl;  
@@ -191,7 +191,7 @@ void test_fermat_little_theorem() {
         if (!a.is_zero()) {
             Fr result = a.pow(Fr::MODULUS - 1);
             if (!(result == Fr::one())) {
-                std::cerr << "❌ Fermat's Little Theorem failed for a=" << a.to_hex() 
+                std::cerr << "Fermat's Little Theorem failed for a=" << a.to_hex() 
                           << ", result=" << result.to_hex() << std::endl;
                 continue;
             }
@@ -346,16 +346,16 @@ int main() {
         benchmark_critical_operations();
         
         std::cout << std::endl;
-        std::cout << "🎉 ALL COMPREHENSIVE TESTS PASSED!" << std::endl;
-        std::cout << "✅ Field implementation satisfies all required properties" << std::endl;
+        std::cout << "ALL COMPREHENSIVE TESTS PASSED!" << std::endl;
+        std::cout << "Field implementation satisfies all required properties" << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << std::endl;
-        std::cerr << "❌ COMPREHENSIVE TEST FAILED: " << e.what() << std::endl;
+        std::cerr << "COMPREHENSIVE TEST FAILED: " << e.what() << std::endl;
         return 1;
     } catch (...) {
         std::cerr << std::endl;
-        std::cerr << "❌ COMPREHENSIVE TEST FAILED: Unknown error" << std::endl;
+        std::cerr << "COMPREHENSIVE TEST FAILED: Unknown error" << std::endl;
         return 1;
     }
     

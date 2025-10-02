@@ -3,30 +3,27 @@
 
 namespace zkmini {
 
-G1::G1() : x(), y(), z() {} // Point at infinity
+G1::G1() : x(), y(), z() {}
 
 G1::G1(const Fq& x, const Fq& y) : x(x), y(y), z(Fq(1)) {}
 
 G1::G1(const Fq& x, const Fq& y, const Fq& z) : x(x), y(y), z(z) {}
 
 G1 G1::operator+(const G1& other) const {
-    // Handle point at infinity cases
+
     if (this->is_zero()) return other;
     if (other.is_zero()) return *this;
-    
-    // If same point, use doubling
+
     if (*this == other) return this->double_point();
     
-    // Standard addition formulas for Jacobian coordinates
-    // P = (X1, Y1, Z1), Q = (X2, Y2, Z2)
-    // Result R = (X3, Y3, Z3)
+
     
-    Fq Z1Z1 = z * z;        // Z1^2
-    Fq Z2Z2 = other.z * other.z;  // Z2^2
-    Fq U1 = x * Z2Z2;       // X1 * Z2^2
-    Fq U2 = other.x * Z1Z1; // X2 * Z1^2
-    Fq S1 = y * Z2Z2 * other.z; // Y1 * Z2^3
-    Fq S2 = other.y * Z1Z1 * z; // Y2 * Z1^3
+    Fq Z1Z1 = z * z;        
+    Fq Z2Z2 = other.z * other.z;  
+    Fq U1 = x * Z2Z2;       
+    Fq U2 = other.x * Z1Z1; 
+    Fq S1 = y * Z2Z2 * other.z; 
+    Fq S2 = other.y * Z1Z1 * z; 
     
     // Check if points are the same or opposite
     if (U1 == U2) {

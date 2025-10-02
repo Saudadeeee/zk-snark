@@ -63,7 +63,6 @@ Fq Fq::operator-(const Fq& other) const {
 Fq Fq::operator*(const Fq& other) const {
     uint64_t result[8] = {0};
     
-    // Simple schoolbook multiplication
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (i + j < 8) {
@@ -86,19 +85,15 @@ Fq Fq::operator*(const Fq& other) const {
         }
     }
     
-    // Reduce the 512-bit result modulo p
     Fq res;
     res.data[0] = result[0];
     res.data[1] = result[1]; 
     res.data[2] = result[2];
     res.data[3] = result[3];
     
-    // Simple modular reduction for higher limbs
     for (int i = 4; i < 8; i++) {
         if (result[i] > 0) {
-            // Multiply by 2^(64*(i-4)) mod p and add
             for (int shift = 0; shift < i - 4; shift++) {
-                // Left shift by 64 bits with modular reduction
                 uint64_t carry = 0;
                 for (int k = 0; k < 4; k++) {
                     uint64_t temp = (res.data[k] << 1) | carry;
@@ -108,7 +103,6 @@ Fq Fq::operator*(const Fq& other) const {
                 res.reduce();
             }
             
-            // Add result[i] times current power
             uint64_t carry = result[i];
             for (int k = 0; k < 4 && carry > 0; k++) {
                 uint64_t temp = res.data[k] + carry;

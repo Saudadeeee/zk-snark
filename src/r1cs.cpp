@@ -331,11 +331,9 @@ R1CS R1CS::deserialize(const std::vector<uint8_t>& data) {
 }
 
 R1CS R1CS::from_json(const std::string& json_str) {
-    // Simplified JSON parsing - in practice you'd use a proper JSON library
+
     R1CS result;
-    
-    // For now, return empty R1CS - full JSON parsing would be quite complex
-    // This is a placeholder that maintains the interface
+ 
     result.n_vars = 0;
     result.n_cons = 0;
     

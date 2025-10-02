@@ -105,7 +105,7 @@ void demo_basic_qap() {
     std::cout << "\nOverall QAP satisfied: " << (qap_ok ? "✓ YES" : "✗ NO") << std::endl;
     
     if (qap_ok) {
-        std::cout << "\n🎉 QAP demo completed successfully!" << std::endl;
+        std::cout << "\nQAP demo completed successfully!" << std::endl;
         std::cout << "The witness (3, 4, 12) satisfies the constraint 3 * 4 = 12" << std::endl;
         std::cout << "in both R1CS and QAP representations." << std::endl;
     }
@@ -175,7 +175,7 @@ int main() {
         demo_basic_qap();
         demo_qap_properties();
         
-        std::cout << "\n🎯 Summary:" << std::endl;
+        std::cout << "\nSummary:" << std::endl;
         std::cout << "- QAP successfully converts R1CS constraints to polynomial form" << std::endl;
         std::cout << "- Basis polynomials correctly encode constraint coefficients" << std::endl; 
         std::cout << "- Vanishing polynomial ensures constraint satisfaction" << std::endl;
@@ -185,7 +185,7 @@ int main() {
         return 0;
         
     } catch (const std::exception& e) {
-        std::cerr << "\n❌ Demo failed with exception: " << e.what() << std::endl;
+        std::cerr << "\nDemo failed with exception: " << e.what() << std::endl;
         return 1;
     }
 }

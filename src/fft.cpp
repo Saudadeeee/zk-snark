@@ -135,14 +135,11 @@ void FFT::bit_reverse(std::vector<Fr>& a) const {
 }
 
 Fr FFT::find_root_of_unity(size_t n) {
-    // For BN254 field, use a known primitive root
-    // This is a simplification - in practice you'd compute this properly
-    Fr generator = Fr(5); // Generator of multiplicative group
+
+    Fr generator = Fr(5); 
     
-    // Find order of field - 1
     Fr field_order_minus_1 = Fr(0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000000ULL);
     
-    // Compute g^((p-1)/n) for primitive n-th root
     Fr exponent = field_order_minus_1 / Fr(n);
     return generator.pow(exponent);
 }

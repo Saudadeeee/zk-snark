@@ -215,10 +215,10 @@ int main() {
         benchmark_operations();
         
         std::cout << std::endl;
-        std::cout << "🎉 All tests passed!" << std::endl;
+        std::cout << "All tests passed!" << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "❌ Test failed: " << e.what() << std::endl;
+        std::cerr << "Test failed: " << e.what() << std::endl;
         return 1;
     }
     

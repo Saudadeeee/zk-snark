@@ -1,0 +1,23 @@
+# Demo R1CS Circuit
+# Circuit: a * b = c
+# Variables: [1, a, b, c] (indices 0, 1, 2, 3)
+# Public inputs: c (index 3)
+# Private inputs: a, b (indices 1, 2)
+# Constraint: a * b = c
+
+# This is a placeholder format
+# Real implementation would use binary format or JSON
+
+num_variables: 4
+num_constraints: 1
+public_inputs: 1
+
+# Constraint 0: a * b = c
+# A terms: coefficient 1 for variable 'a' (index 1)
+# B terms: coefficient 1 for variable 'b' (index 2)
+# C terms: coefficient 1 for variable 'c' (index 3)
+
+constraint_0:
+  A: [(1, 1)]    # variable 1, coefficient 1
+  B: [(2, 1)]    # variable 2, coefficient 1
+  C: [(3, 1)]    # variable 3, coefficient 1
