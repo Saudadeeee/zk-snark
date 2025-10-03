@@ -222,7 +222,8 @@ sizeof(G2)        // 192 bytes (uncompressed), 96 bytes (compressed)
 sizeof(Proof)     // 256 bytes total (G1 + G2 + G1)
 
 // For circuit with n constraints:
-sizeof(ProvingKey)   // ~32n + 96n + 192n = ~320n bytes
+sizeof(ProvingKey)   // ~32n + 96n + 192n = ~320
+bytes
 sizeof(VerifyingKey) // ~96 * num_public_inputs bytes
 ```
 

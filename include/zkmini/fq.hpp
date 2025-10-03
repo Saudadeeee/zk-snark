@@ -40,4 +40,4 @@ private:
     void reduce_by_modulus(uint64_t high, int shift);
 };
 
-} // namespace zkmini
+}

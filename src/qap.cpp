@@ -289,4 +289,4 @@ QAPLegacy::compute_abc_polynomials(const std::vector<Fr>& assignment) const {
     return {A_poly, B_poly, C_poly};
 }
 
-} // namespace zkmini
+}

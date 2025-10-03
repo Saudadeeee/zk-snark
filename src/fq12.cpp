@@ -164,4 +164,4 @@ Fq12 Fq12::cyclotomic_exp(const std::vector<bool>& exp) const {
     return res;
 }
 
-} // namespace zkmini
+}

@@ -23,7 +23,6 @@ std::vector<Fr> FFT::ifft(const std::vector<Fr>& evals) const {
     ZK_ASSERT(result.size() == domain_size, "Evaluation vector size mismatch");
     fft_in_place(result, true);
     
-    // Scale by 1/n
     Fr inv_n = Fr(domain_size).inverse();
     for (Fr& val : result) {
         val = val * inv_n;
@@ -144,4 +143,4 @@ Fr FFT::find_root_of_unity(size_t n) {
     return generator.pow(exponent);
 }
 
-} // namespace zkmini
+}

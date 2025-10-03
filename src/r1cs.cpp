@@ -8,14 +8,12 @@
 namespace zkmini {
 
 R1CS::R1CS(size_t n_vars_hint) : n_vars(1), n_cons(0), next_var(1) {
-    // Reserve space for efficiency
+    
     if (n_vars_hint > 1) {
         n_vars = n_vars_hint;
         next_var = n_vars_hint;
     }
 }
-
-// Variable management
 VarIdx R1CS::allocate_var() {
     VarIdx var = next_var++;
     if (var >= n_vars) {
@@ -30,8 +28,6 @@ void R1CS::mark_public(VarIdx v) {
         public_indices.push_back(v);
     }
 }
-
-// Linear combination utilities
 LinearCombination R1CS::lc_from_terms(std::initializer_list<Term> terms) {
     LinearCombination lc(terms);
     lc_compress(lc);
@@ -49,24 +45,24 @@ LinearCombination R1CS::lc_var(VarIdx i, const Fr& c) {
 }
 
 LinearCombination R1CS::lc_const(const Fr& c) {
-    return {Term(0, c)};  // x_0 = 1, so constant c becomes c * x_0
+    return {Term(0, c)};  
 }
 
 void R1CS::lc_add_term(LinearCombination& L, VarIdx i, const Fr& c) {
-    if (c == Fr(0)) return;  // Don't add zero terms
+    if (c == Fr(0)) return;  
     L.push_back(Term(i, c));
 }
 
 void R1CS::lc_compress(LinearCombination& L) {
     if (L.empty()) return;
     
-    // Use map to combine terms with same index
+    
     std::unordered_map<VarIdx, Fr> coeff_map;
     for (const auto& term : L) {
         coeff_map[term.idx] = coeff_map[term.idx] + term.coeff;
     }
     
-    // Rebuild linear combination without zero terms
+    
     L.clear();
     for (const auto& pair : coeff_map) {
         if (pair.second != Fr(0)) {
@@ -74,17 +70,15 @@ void R1CS::lc_compress(LinearCombination& L) {
         }
     }
     
-    // Sort by index for deterministic representation
+    
     std::sort(L.begin(), L.end(), [](const Term& a, const Term& b) {
         return a.idx < b.idx;
     });
 }
-
-// Constraint management
 void R1CS::add_constraint(const LinearCombination& A_row,
                          const LinearCombination& B_row, 
                          const LinearCombination& C_row) {
-    // Make copies and compress
+    
     LinearCombination a_compressed = A_row;
     LinearCombination b_compressed = B_row;
     LinearCombination c_compressed = C_row;
@@ -93,7 +87,7 @@ void R1CS::add_constraint(const LinearCombination& A_row,
     lc_compress(b_compressed);
     lc_compress(c_compressed);
     
-    // Validate all variable indices
+    
     for (const auto& term : a_compressed) {
         ZK_ASSERT(term.idx < n_vars, "Variable index out of bounds in A row");
     }
@@ -109,8 +103,6 @@ void R1CS::add_constraint(const LinearCombination& A_row,
     C.push_back(c_compressed);
     n_cons++;
 }
-
-// Helper constraint builders
 void R1CS::add_mul(VarIdx a, VarIdx b, VarIdx c) {
     add_constraint(lc_var(a), lc_var(b), lc_var(c));
 }
@@ -120,11 +112,9 @@ void R1CS::add_mul_lin(const LinearCombination& A_lc, VarIdx b, const LinearComb
 }
 
 void R1CS::add_lin_eq(const LinearCombination& L, const LinearCombination& R) {
-    // L = R  becomes  L * 1 = R
+    
     add_constraint(L, lc_const(Fr(1)), R);
 }
-
-// Evaluation and satisfaction
 Fr R1CS::eval_lc(const LinearCombination& L, const std::vector<Fr>& x) {
     Fr result = Fr(0);
     for (const auto& term : L) {
@@ -172,8 +162,6 @@ bool R1CS::is_satisfied_verbose(const std::vector<Fr>& x, size_t& first_bad_row,
     
     return true;
 }
-
-// Column extraction for QAP conversion
 std::vector<Fr> R1CS::column_values(const std::vector<LinearCombination>& M, VarIdx col) const {
     std::vector<Fr> vals(n_cons, Fr(0));
     
@@ -181,17 +169,15 @@ std::vector<Fr> R1CS::column_values(const std::vector<LinearCombination>& M, Var
         for (const auto& term : M[k]) {
             if (term.idx == col) {
                 vals[k] = term.coeff;
-                break;  // Found the coefficient for this variable in this constraint
+                break;  
             }
         }
     }
     
     return vals;
 }
-
-// Utilities
 void R1CS::finalize() {
-    // Compress all linear combinations and shrink vectors
+    
     for (auto& lc : A) {
         lc_compress(lc);
         lc.shrink_to_fit();
@@ -217,21 +203,21 @@ std::string R1CS::debug_row(size_t k) const {
     std::stringstream ss;
     ss << "Constraint " << k << ":\n";
     
-    // A row
+    
     ss << "  A[" << k << "]: ";
     for (const auto& term : A[k]) {
         ss << "(" << term.idx << "," << term.coeff.to_string() << ") ";
     }
     ss << "\n";
     
-    // B row  
+    
     ss << "  B[" << k << "]: ";
     for (const auto& term : B[k]) {
         ss << "(" << term.idx << "," << term.coeff.to_string() << ") ";
     }
     ss << "\n";
     
-    // C row
+    
     ss << "  C[" << k << "]: ";
     for (const auto& term : C[k]) {
         ss << "(" << term.idx << "," << term.coeff.to_string() << ") ";
@@ -240,8 +226,6 @@ std::string R1CS::debug_row(size_t k) const {
     
     return ss.str();
 }
-
-// Legacy compatibility methods
 bool R1CS::is_satisfied(const std::vector<Fr>& public_inputs,
                        const std::vector<Fr>& private_inputs) const {
     std::vector<Fr> full_assignment = generate_full_assignment(public_inputs, private_inputs);
@@ -253,36 +237,34 @@ std::vector<Fr> R1CS::generate_full_assignment(const std::vector<Fr>& public_inp
     std::vector<Fr> full_assignment;
     full_assignment.reserve(n_vars);
     
-    // z[0] = 1 (constant)
+    
     full_assignment.push_back(Fr(1));
     
-    // Add public inputs
+    
     for (const Fr& input : public_inputs) {
         full_assignment.push_back(input);
     }
     
-    // Add private inputs
+    
     for (const Fr& input : private_inputs) {
         full_assignment.push_back(input);
     }
     
-    // Pad with zeros if needed
+    
     while (full_assignment.size() < n_vars) {
         full_assignment.push_back(Fr(0));
     }
     
     return full_assignment;
 }
-
-// R1CS Serialization
 std::vector<uint8_t> R1CS::serialize() const {
     std::vector<uint8_t> result;
     
-    // Write dimensions
+    
     Serialization::write_uint64(result, n_vars);
     Serialization::write_uint64(result, n_cons);
     
-    // Write matrices
+    
     auto A_data = serialize_matrix(A);
     auto B_data = serialize_matrix(B);
     auto C_data = serialize_matrix(C);
@@ -302,7 +284,7 @@ std::vector<uint8_t> R1CS::serialize() const {
 R1CS R1CS::deserialize(const std::vector<uint8_t>& data) {
     size_t offset = 0;
     
-    // Read dimensions
+    
     uint64_t n_vars = Serialization::read_uint64(data, offset);
     uint64_t n_cons = Serialization::read_uint64(data, offset);
     
@@ -310,7 +292,7 @@ R1CS R1CS::deserialize(const std::vector<uint8_t>& data) {
     result.n_vars = n_vars;
     result.n_cons = n_cons;
     
-    // Read matrices
+    
     uint64_t A_size = Serialization::read_uint64(data, offset);
     std::vector<uint8_t> A_data(data.begin() + offset, data.begin() + offset + A_size);
     offset += A_size;
@@ -427,4 +409,4 @@ std::vector<std::vector<Term>> R1CS::deserialize_matrix(const std::vector<uint8_
     return matrix;
 }
 
-} // namespace zkmini
+}

@@ -6,8 +6,6 @@ namespace zkmini {
 G1 MSM::msm_g1(const std::vector<Fr>& scalars, const std::vector<G1>& points) {
     ZK_ASSERT(scalars.size() == points.size(), "Scalar and point vectors must have same size");
     
-    // Simple double-and-add for small sizes
-    // For larger sizes, windowed_msm_g1 provides better performance
     G1 result;
     for (size_t i = 0; i < scalars.size(); ++i) {
         result = result + (points[i] * scalars[i]);
@@ -36,7 +34,7 @@ G1 MSM::windowed_msm_g1(const std::vector<Fr>& scalars,
     }
     
     G1 result;
-    size_t num_windows = (256 + window_size - 1) / window_size; // 256-bit scalars
+    size_t num_windows = (256 + window_size - 1) / window_size;
     
     for (size_t window = 0; window < num_windows; ++window) {
         result = result.double_point();
@@ -44,7 +42,7 @@ G1 MSM::windowed_msm_g1(const std::vector<Fr>& scalars,
             result = result.double_point();
         }
         
-        // Process points in current window
+        
         for (size_t i = 0; i < scalars.size(); ++i) {
             auto scalar_bytes = scalars[i].to_bytes();
             size_t bit_index = (num_windows - 1 - window) * window_size;
@@ -85,7 +83,7 @@ G2 MSM::windowed_msm_g2(const std::vector<Fr>& scalars,
     }
     
     G2 result;
-    size_t num_windows = (256 + window_size - 1) / window_size; // 256-bit scalars
+    size_t num_windows = (256 + window_size - 1) / window_size; 
     
     for (size_t window = 0; window < num_windows; ++window) {
         result = result.double_point();
@@ -93,7 +91,7 @@ G2 MSM::windowed_msm_g2(const std::vector<Fr>& scalars,
             result = result.double_point();
         }
         
-        // Process points in current window
+        
         for (size_t i = 0; i < scalars.size(); ++i) {
             auto scalar_bytes = scalars[i].to_bytes();
             size_t bit_index = (num_windows - 1 - window) * window_size;
@@ -125,20 +123,17 @@ G2 MSM::windowed_msm_g2(const std::vector<Fr>& scalars,
 
 G1 MSM::pippenger_msm_g1(const std::vector<Fr>& scalars, 
                          const std::vector<G1>& points) {
-    // TODO: Implement Pippenger's algorithm
     return msm_g1(scalars, points);
 }
 
 G2 MSM::pippenger_msm_g2(const std::vector<Fr>& scalars, 
                          const std::vector<G2>& points) {
-    // TODO: Implement Pippenger's algorithm
     return msm_g2(scalars, points);
 }
 
 MSM::G1Table::G1Table(const G1& base, size_t table_size) : window_size(4) {
-    // TODO: Precompute table for fixed base MSM
     table.resize(1 << window_size);
-    table[0] = G1(); // Point at infinity
+    table[0] = G1(); 
     if (table_size > 1) {
         table[1] = base;
         for (size_t i = 2; i < table.size(); ++i) {
@@ -156,7 +151,7 @@ G1 MSM::G1Table::multiply(const Fr& scalar) const {
     for (size_t byte_idx = 0; byte_idx < scalar_bytes.size(); ++byte_idx) {
         uint8_t byte = scalar_bytes[byte_idx];
         for (size_t bit = 0; bit < 8; bit += window_size) {
-            // Extract window bits
+            
             uint64_t window_value = 0;
             for (size_t w = 0; w < window_size && bit + w < 8; ++w) {
                 if (byte & (1 << (bit + w))) {
@@ -164,12 +159,12 @@ G1 MSM::G1Table::multiply(const Fr& scalar) const {
                 }
             }
             
-            // Shift result by window_size bits
+            
             for (size_t i = 0; i < window_size; ++i) {
                 result = result.double_point();
             }
             
-            // Add precomputed value
+            
             if (window_value < table.size()) {
                 result = result + table[window_value];
             }
@@ -180,9 +175,8 @@ G1 MSM::G1Table::multiply(const Fr& scalar) const {
 }
 
 MSM::G2Table::G2Table(const G2& base, size_t table_size) : window_size(4) {
-    // TODO: Precompute table for fixed base MSM
     table.resize(1 << window_size);
-    table[0] = G2(); // Point at infinity
+    table[0] = G2(); 
     if (table_size > 1) {
         table[1] = base;
         for (size_t i = 2; i < table.size(); ++i) {
@@ -200,7 +194,7 @@ G2 MSM::G2Table::multiply(const Fr& scalar) const {
     for (size_t byte_idx = 0; byte_idx < scalar_bytes.size(); ++byte_idx) {
         uint8_t byte = scalar_bytes[byte_idx];
         for (size_t bit = 0; bit < 8; bit += window_size) {
-            // Extract window bits
+            
             uint64_t window_value = 0;
             for (size_t w = 0; w < window_size && bit + w < 8; ++w) {
                 if (byte & (1 << (bit + w))) {
@@ -208,12 +202,12 @@ G2 MSM::G2Table::multiply(const Fr& scalar) const {
                 }
             }
             
-            // Shift result by window_size bits
+            
             for (size_t i = 0; i < window_size; ++i) {
                 result = result.double_point();
             }
             
-            // Add precomputed value
+            
             if (window_value < table.size()) {
                 result = result + table[window_value];
             }
@@ -224,21 +218,20 @@ G2 MSM::G2Table::multiply(const Fr& scalar) const {
 }
 
 size_t MSM::optimal_window_size(size_t num_points) {
-    // Empirically determined optimal window sizes
-    // Trade-off between precomputation and window processing
+    
+    
     if (num_points < 8) return 2;
     if (num_points < 32) return 3;
     if (num_points < 128) return 4;
     if (num_points < 512) return 5;
     if (num_points < 2048) return 6;
     if (num_points < 8192) return 7;
-    return 8; // Maximum practical window size
+    return 8; 
 }
 
 std::vector<std::vector<size_t>> MSM::bucket_sort(const std::vector<Fr>& scalars, 
                                                   size_t window_size) {
-    // TODO: Implement bucket sorting for Pippenger's algorithm
     return {};
 }
 
-} // namespace zkmini
+}

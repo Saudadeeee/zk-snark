@@ -29,4 +29,4 @@ public:
     Fq2 mul_by_nonresidue() const;
 };
 
-} // namespace zkmini
+}

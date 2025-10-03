@@ -70,13 +70,13 @@ Fq Fq::operator*(const Fq& other) const {
                 uint64_t low = (uint64_t)prod;
                 uint64_t high = (uint64_t)(prod >> 64);
                 
-                // Add low part
+                
                 uint64_t carry = 0;
                 uint64_t temp = result[i + j] + low;
                 if (temp < result[i + j]) carry = 1;
                 result[i + j] = temp;
                 
-                // Add high part with carry
+                
                 if (i + j + 1 < 8) {
                     temp = result[i + j + 1] + high + carry;
                     result[i + j + 1] = temp;
@@ -230,9 +230,9 @@ void Fq::div2() {
 }
 
 void Fq::reduce_by_modulus(uint64_t high, int shift) {
-    // Simplified reduction - just ensure we stay under modulus
+    
     while (shift > 0) {
-        high = (high << 1) % MODULUS[0]; // Approximate
+        high = (high << 1) % MODULUS[0]; 
         shift--;
     }
     
@@ -245,4 +245,4 @@ void Fq::reduce_by_modulus(uint64_t high, int shift) {
     reduce();
 }
 
-} // namespace zkmini
+}

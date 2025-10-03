@@ -474,7 +474,7 @@ std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std:
         product[i + 4] = carry;
     }
     
-    // Add circuit breaker to prevent infinite loops
+    
     const int MAX_ITERATIONS = 1000;
     int iteration_count = 0;
     
@@ -533,14 +533,14 @@ std::array<uint64_t, 4> Fr::mul_256(const std::array<uint64_t, 4>& a, const std:
         }
     }
     
-    // Check if we hit the iteration limit
+    
     if (iteration_count >= MAX_ITERATIONS) {
         std::cerr << "Warning: mul_256 hit maximum iterations, possible infinite loop prevented\n";
-        // Return a fallback result - this should not happen in correct implementation
-        // but prevents hanging the system
+        
+        
     }
     
-    // Extract the lower 256 bits as result
+    
     std::array<uint64_t, 4> result = {product[0], product[1], product[2], product[3]};
     return result;
 }
@@ -641,11 +641,11 @@ std::array<uint64_t, 4> Fr::inv_256(const std::array<uint64_t, 4>& a) {
 }
 
 void Fr::reduce_256(std::array<uint64_t, 4>& a) {
-    // Reduce a modulo BN254 prime using repeated subtraction
-    // This is simple but not optimal - Barrett or Montgomery reduction would be better
+    
+    
     
     while (!is_less_256(a, bn254_fr::MODULUS_BN254)) {
-        // Subtract modulus from a
+        
         uint64_t borrow = 0;
         for (int i = 0; i < 4; i++) {
             __uint128_t diff = (__uint128_t)a[i] - bn254_fr::MODULUS_BN254[i] - borrow;
@@ -681,8 +681,6 @@ std::array<uint64_t, 4> Fr::pow_256(const std::array<uint64_t, 4>& base, uint64_
     
     return result;
 }
-
-// Helper functions for Extended Euclidean Algorithm
 bool Fr::is_even_256(const std::array<uint64_t, 4>& a) {
     return (a[0] & 1) == 0;
 }

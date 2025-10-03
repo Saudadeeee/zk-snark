@@ -67,4 +67,4 @@ Fq2 Fq2::mul_by_nonresidue() const {
     return Fq2(c0 * NON_RESIDUE + c1 * NON_RESIDUE, c0 + c1);
 }
 
-} // namespace zkmini
+}

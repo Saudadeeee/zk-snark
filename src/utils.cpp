@@ -10,8 +10,6 @@
 #endif
 
 namespace zkmini {
-
-
 ProgressBar::ProgressBar(size_t total, const std::string& description) 
     : total(total), last_printed(0), description(description) {
     start_time = std::chrono::high_resolution_clock::now();
@@ -56,7 +54,7 @@ size_t MemoryInfo::get_memory_usage() {
 }
 
 size_t MemoryInfo::get_peak_memory_usage() {
-    return get_memory_usage(); // Same as current for this implementation
+    return get_memory_usage();
 }
 
 void MemoryInfo::print_memory_usage() {

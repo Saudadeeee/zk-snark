@@ -9,14 +9,12 @@
 #include <iomanip>
 
 namespace zkmini {
-
-// Helper to write binary data
 template<typename T>
 std::vector<uint8_t> Serialization::serialize_vector(const std::vector<T>& vec) {
     std::vector<uint8_t> result;
     write_uint32(result, static_cast<uint32_t>(vec.size()));
     for (const auto& item : vec) {
-        auto item_bytes = serialize_g1(item); // Assuming T is serializable
+        auto item_bytes = serialize_g1(item); 
         result.insert(result.end(), item_bytes.begin(), item_bytes.end());
     }
     return result;
@@ -28,14 +26,14 @@ std::vector<T> Serialization::deserialize_vector(const std::vector<uint8_t>& dat
     std::vector<T> result;
     result.reserve(size);
     for (uint32_t i = 0; i < size; ++i) {
-        result.push_back(deserialize_g1(data, offset)); // Assuming T is deserializable
+        result.push_back(deserialize_g1(data, offset)); 
     }
     return result;
 }
 
 std::vector<uint8_t> Serialization::serialize_fr(const Fr& element) {
     std::vector<uint8_t> result(FR_SIZE, 0);
-    // Simple implementation - just copy raw bytes
+    
     const uint64_t* data_ptr = element.data.data();
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 8; ++j) {
@@ -64,14 +62,14 @@ Fr Serialization::deserialize_fr(const std::vector<uint8_t>& data, size_t& offse
 std::vector<uint8_t> Serialization::serialize_g1(const G1& point) {
     if (point.is_zero()) {
         std::vector<uint8_t> result(G1_SIZE, 0);
-        result[0] = 1; // Mark as infinity
+        result[0] = 1; 
         return result;
     }
     
-    // Simple implementation - serialize as raw coordinates
+    
     std::vector<uint8_t> result;
     result.resize(G1_SIZE);
-    std::fill(result.begin(), result.end(), 0x42); // Placeholder data
+    std::fill(result.begin(), result.end(), 0x42); 
     return result;
 }
 
@@ -83,23 +81,23 @@ G1 Serialization::deserialize_g1(const std::vector<uint8_t>& data, size_t& offse
     
     if (data[offset] == 1) {
         offset += G1_SIZE;
-        return G1(); // Return point at infinity
+        return G1(); 
     }
     
     offset += G1_SIZE;
-    return G1(Fq(1), Fq(2)); // Placeholder - return generator
+    return G1(Fq(1), Fq(2)); 
 }
 
 std::vector<uint8_t> Serialization::serialize_g2(const G2& point) {
     if (point.is_zero()) {
         std::vector<uint8_t> result(G2_SIZE, 0);
-        result[0] = 1; // Mark as infinity
+        result[0] = 1; 
         return result;
     }
     
     std::vector<uint8_t> result;
     result.resize(G2_SIZE);
-    std::fill(result.begin(), result.end(), 0x43); // Placeholder data
+    std::fill(result.begin(), result.end(), 0x43); 
     return result;
 }
 
@@ -111,11 +109,11 @@ G2 Serialization::deserialize_g2(const std::vector<uint8_t>& data, size_t& offse
     
     if (data[offset] == 1) {
         offset += G2_SIZE;
-        return G2(); // Return point at infinity
+        return G2(); 
     }
     
     offset += G2_SIZE;
-    return G2(Fq2(Fq(1), Fq(0)), Fq2(Fq(2), Fq(0))); // Placeholder
+    return G2(Fq2(Fq(1), Fq(0)), Fq2(Fq(2), Fq(0))); 
 }
 
 void Serialization::write_file(const std::string& filename, const std::vector<uint8_t>& data) {
@@ -143,11 +141,11 @@ std::vector<uint8_t> Serialization::read_file(const std::string& filename) {
 }
 
 std::string Serialization::fr_to_json(const Fr& element) {
-    return "\"0x123456789abcdef\""; // Placeholder
+    return "\"0x123456789abcdef\""; 
 }
 
 Fr Serialization::fr_from_json(const std::string& json_str) {
-    (void)json_str; // Silence unused parameter warning
+    (void)json_str; 
     return Fr();
 }
 
@@ -178,13 +176,13 @@ G2 Serialization::g2_from_json(const std::string& json_str) {
 std::vector<uint8_t> Serialization::serialize_g1_compressed(const G1& point) {
     if (point.is_zero()) {
         std::vector<uint8_t> result(G1_COMPRESSED_SIZE, 0);
-        result[0] = 0x40; // Infinity flag
+        result[0] = 0x40; 
         return result;
     }
     
     std::vector<uint8_t> result(G1_COMPRESSED_SIZE, 0);
-    result[0] = 0x80; // Compressed flag
-    // Add actual compression logic here
+    result[0] = 0x80; 
+    
     return result;
 }
 
@@ -198,22 +196,22 @@ G1 Serialization::deserialize_g1_compressed(const std::vector<uint8_t>& data, si
     offset += G1_COMPRESSED_SIZE;
     
     if (flags & 0x40) {
-        return G1(); // Point at infinity
+        return G1(); 
     }
     
-    // Add decompression logic here
+    
     return G1(Fq(1), Fq(2));
 }
 
 std::vector<uint8_t> Serialization::serialize_g2_compressed(const G2& point) {
     if (point.is_zero()) {
         std::vector<uint8_t> result(G2_COMPRESSED_SIZE, 0);
-        result[0] = 0x40; // Infinity flag
+        result[0] = 0x40; 
         return result;
     }
     
     std::vector<uint8_t> result(G2_COMPRESSED_SIZE, 0);
-    result[0] = 0x80; // Compressed flag
+    result[0] = 0x80; 
     return result;
 }
 
@@ -227,7 +225,7 @@ G2 Serialization::deserialize_g2_compressed(const std::vector<uint8_t>& data, si
     offset += G2_COMPRESSED_SIZE;
     
     if (flags & 0x40) {
-        return G2(); // Point at infinity
+        return G2(); 
     }
     
     return G2(Fq2(Fq(1), Fq(0)), Fq2(Fq(2), Fq(0)));
@@ -297,7 +295,7 @@ Fq Serialization::deserialize_fq(const std::vector<uint8_t>& data, size_t& offse
     }
     offset += 32;
     
-    // Create Fq from limbs (simplified)
+    
     return Fq(limbs[0]);
 }
 
@@ -316,9 +314,7 @@ Fq2 Serialization::deserialize_fq2(const std::vector<uint8_t>& data, size_t& off
     Fq c1 = deserialize_fq(data, offset);
     return Fq2(c0, c1);
 }
-
-// Explicit template instantiations
 template std::vector<uint8_t> Serialization::serialize_vector<G1>(const std::vector<G1>&);
 template std::vector<G1> Serialization::deserialize_vector<G1>(const std::vector<uint8_t>&, size_t&);
 
-} // namespace zkmini
+}

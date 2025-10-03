@@ -29,4 +29,4 @@ public:
     Fq12 cyclotomic_exp(const std::vector<bool>& exp) const;
 };
 
-} // namespace zkmini
+}

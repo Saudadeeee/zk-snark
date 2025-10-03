@@ -36,12 +36,12 @@ public:
     static constexpr bool USE_64BIT_DEV = false;
     static constexpr uint64_t MODULUS = bn254_fr::MODULUS_DEV;
 
-    // Constructors
+    
     Fr();
     explicit Fr(uint64_t value);
     explicit Fr(const std::array<uint64_t, 4>& limbs);
     
-    // Static factory methods
+    
     static Fr zero();
     static Fr one();
     static Fr from_uint64(uint64_t value);
@@ -59,13 +59,13 @@ public:
     Fr operator-() const;
     Fr neg() const;
     
-    // Comparison operations
+    
     bool operator==(const Fr& other) const;
     bool operator!=(const Fr& other) const;
     bool is_zero() const;
     bool is_one() const;
     
-    // Advanced operations
+    
     Fr square() const;
     Fr pow(uint64_t exponent) const;
     Fr pow(const Fr& exponent) const;
@@ -77,7 +77,7 @@ public:
     std::string to_hex() const;
     static Fr from_hex(const std::string& hex);
     
-    // Utilities for constant-time operations
+    
     static Fr conditional_select(bool condition, const Fr& a, const Fr& b);
     
     std::string to_string() const;
@@ -102,16 +102,14 @@ private:
     static bool is_less_256(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
     static bool is_zero_256(const std::array<uint64_t, 4>& a);
     
-    // Helper functions for Extended Euclidean Algorithm
+    
     static bool is_even_256(const std::array<uint64_t, 4>& a);
     static bool is_one_256(const std::array<uint64_t, 4>& a);
     static std::array<uint64_t, 4> div2_256(const std::array<uint64_t, 4>& a);
     static std::array<uint64_t, 4> sub_256_signed(const std::array<uint64_t, 4>& a, const std::array<uint64_t, 4>& b);
 
 };
-
-// Stream operators
 std::ostream& operator<<(std::ostream& os, const Fr& fr);
 std::istream& operator>>(std::istream& is, Fr& fr);
 
-} // namespace zkmini
+}

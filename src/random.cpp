@@ -4,8 +4,6 @@
 #include <algorithm>
 
 namespace zkmini {
-
-// Random class implementation
 Random::Random(uint64_t seed) : uint64_dist(0, UINT64_MAX), byte_dist(0, 255) {
     if (seed == 0) {
         seed = get_system_seed();
@@ -14,22 +12,22 @@ Random::Random(uint64_t seed) : uint64_dist(0, UINT64_MAX), byte_dist(0, 255) {
 }
 
 Fr Random::random_fr() {
-    // Generate random field element in range [0, Fr::MODULUS)
+    
     if constexpr (Fr::USE_64BIT_DEV) {
-        // For development mode, use simple 64-bit generation
+        
         uint64_t val = uint64_dist(rng);
         if (val >= Fr::MODULUS) {
             val %= Fr::MODULUS;
         }
         return Fr(val);
     } else {
-        // For full 256-bit mode, generate proper random element
+        
         std::array<uint64_t, 4> limbs;
         do {
             for (int i = 0; i < 4; i++) {
                 limbs[i] = uint64_dist(rng);
             }
-            // Reduce if >= modulus
+            
         } while (limbs[3] > bn254_fr::MODULUS_BN254[3] || 
                 (limbs[3] == bn254_fr::MODULUS_BN254[3] && 
                  (limbs[2] > bn254_fr::MODULUS_BN254[2] ||
@@ -105,8 +103,6 @@ uint64_t Random::get_system_seed() {
     auto duration = now.time_since_epoch();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 }
-
-// Global convenience functions
 Fr random_fr() {
     return Random::get_global().random_fr();
 }
@@ -131,4 +127,4 @@ void seed_random(uint64_t seed) {
     Random::seed_global(seed);
 }
 
-} // namespace zkmini
+}

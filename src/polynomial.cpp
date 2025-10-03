@@ -4,11 +4,7 @@
 #include <sstream>
 
 namespace zkmini {
-
-// Static zero for returning references
 const Fr Polynomial::ZERO_FR = Fr();
-
-// Constructors
 Polynomial::Polynomial() {}
 
 Polynomial::Polynomial(const std::vector<Fr>& coeffs) : coeffs(coeffs) {
@@ -16,8 +12,6 @@ Polynomial::Polynomial(const std::vector<Fr>& coeffs) : coeffs(coeffs) {
 }
 
 Polynomial::Polynomial(size_t degree) : coeffs(degree + 1, Fr()) {}
-
-// Factory methods
 Polynomial Polynomial::zero() {
     return Polynomial();
 }
@@ -31,8 +25,6 @@ Polynomial Polynomial::from_coeffs(const std::vector<Fr>& coeffs) {
     p.normalize();
     return p;
 }
-
-// Access/update methods
 int Polynomial::deg() const {
     if (coeffs.empty()) return -1;
     return static_cast<int>(coeffs.size() - 1);
@@ -118,8 +110,6 @@ void Polynomial::sub_inplace(Polynomial& dst, const Polynomial& src) {
     
     dst.normalize();
 }
-
-// Scalar multiplication
 Polynomial Polynomial::scalar_mul(const Polynomial& f, const Fr& k) {
     if (k.is_zero()) return Polynomial::zero();
     if (f.is_zero()) return Polynomial::zero();
@@ -145,11 +135,9 @@ void Polynomial::scalar_mul_inplace(Polynomial& f, const Fr& k) {
         coeff = coeff * k;
     }
     
-    // Normalize to handle case where leading coefficients become zero
+    
     f.normalize();
 }
-
-// Polynomial multiplication
 Polynomial Polynomial::mul_schoolbook(const Polynomial& f, const Polynomial& g) {
     if (f.is_zero() || g.is_zero()) return Polynomial::zero();
     
@@ -162,10 +150,10 @@ Polynomial Polynomial::mul_schoolbook(const Polynomial& f, const Polynomial& g) 
         }
     }
     
-    // Create polynomial without normalization in constructor
+    
     Polynomial p;
     p.coeffs = result;
-    // Only normalize at the end
+    
     p.normalize();
     return p;
 }
@@ -173,8 +161,6 @@ Polynomial Polynomial::mul_schoolbook(const Polynomial& f, const Polynomial& g) 
 Polynomial Polynomial::square(const Polynomial& f) {
     return mul_schoolbook(f, f);
 }
-
-// Evaluation using Horner's method
 Fr Polynomial::eval(const Polynomial& f, const Fr& x) {
     if (f.is_zero() || f.coeffs.empty()) return Fr();
     
@@ -184,8 +170,6 @@ Fr Polynomial::eval(const Polynomial& f, const Fr& x) {
     }
     return acc;
 }
-
-// Shift operations (multiply by x^k)
 Polynomial Polynomial::mul_xk(const Polynomial& f, size_t k) {
     if (f.is_zero()) return Polynomial::zero();
     
@@ -197,8 +181,6 @@ Polynomial Polynomial::mul_xk(const Polynomial& f, size_t k) {
     Polynomial p(result);
     return p;
 }
-
-// Polynomial division
 void Polynomial::divrem(const Polynomial& N, const Polynomial& D, Polynomial& Q, Polynomial& R) {
     assert(!D.is_zero() && "Divisor cannot be zero");
     
@@ -237,13 +219,11 @@ void Polynomial::divrem(const Polynomial& N, const Polynomial& D, Polynomial& Q,
     Q.normalize();
     R.normalize();
 }
-
-// Vanishing polynomial construction
 Polynomial Polynomial::vanishing(const std::vector<Fr>& points) {
     Polynomial Z = Polynomial::one();
     
     for (const Fr& s : points) {
-        // Create linear polynomial (X - s) = (-s, 1)
+        
         Fr neg_s = Fr() - s;
         std::vector<Fr> lin_coeffs = {neg_s, Fr(1)};
         Polynomial lin(lin_coeffs);
@@ -253,19 +233,17 @@ Polynomial Polynomial::vanishing(const std::vector<Fr>& points) {
     Z.normalize();
     return Z;
 }
-
-// Lagrange interpolation
 Polynomial Polynomial::lagrange_basis(const std::vector<Fr>& pts, size_t j) {
     assert(j < pts.size() && "Index j out of bounds");
     
-    // Check for duplicate points
+    
     for (size_t i = 0; i < pts.size(); ++i) {
         if (i != j) {
             assert(!(pts[i] == pts[j]) && "Duplicate points not allowed");
         }
     }
     
-    // Numerator: N_j(X) = ∏(i≠j) (X - s_i)
+    
     Polynomial Nj = Polynomial::one();
     for (size_t i = 0; i < pts.size(); ++i) {
         if (i != j) {
@@ -276,7 +254,7 @@ Polynomial Polynomial::lagrange_basis(const std::vector<Fr>& pts, size_t j) {
         }
     }
     
-    // Denominator: D_j = ∏(i≠j) (s_j - s_i)
+    
     Fr Dj = Fr(1);
     for (size_t i = 0; i < pts.size(); ++i) {
         if (i != j) {
@@ -305,8 +283,6 @@ Polynomial Polynomial::interpolate(const std::vector<Fr>& pts, const std::vector
     P.normalize();
     return P;
 }
-
-// Utility methods
 bool Polynomial::is_zero() const {
     return coeffs.empty();
 }
@@ -349,8 +325,6 @@ bool Polynomial::equals(const Polynomial& other) const {
     b.normalize();
     return a.coeffs == b.coeffs;
 }
-
-// Operator overloads (convenience wrappers)
 Polynomial Polynomial::operator+(const Polynomial& other) const {
     return add(*this, other);
 }
@@ -370,8 +344,6 @@ Polynomial Polynomial::operator*(const Fr& scalar) const {
 bool Polynomial::operator==(const Polynomial& other) const {
     return equals(other);
 }
-
-// Evaluation
 Fr Polynomial::evaluate(const Fr& x) const {
     return eval(*this, x);
 }
@@ -384,10 +356,8 @@ std::vector<Fr> Polynomial::evaluate_batch(const std::vector<Fr>& x_vec) const {
     }
     return result;
 }
-
-// Degree and properties (legacy compatibility)
 size_t Polynomial::degree() const {
-    if (coeffs.empty()) return static_cast<size_t>(-1); // This will wrap to large number, but maintains compatibility
+    if (coeffs.empty()) return static_cast<size_t>(-1); 
     return coeffs.size() - 1;
 }
 
@@ -395,26 +365,18 @@ Fr Polynomial::leading_coefficient() const {
     if (coeffs.empty()) return Fr();
     return coeffs.back();
 }
-
-// Polynomial division (legacy compatibility)
 std::pair<Polynomial, Polynomial> Polynomial::divide(const Polynomial& divisor) const {
     Polynomial Q, R;
     divrem(*this, divisor, Q, R);
     return {Q, R};
 }
-
-// Lagrange interpolation (legacy compatibility)
 Polynomial Polynomial::lagrange_interpolate(const std::vector<Fr>& x_coords, 
                                           const std::vector<Fr>& y_coords) {
     return interpolate(x_coords, y_coords);
 }
-
-// Vanishing polynomial (legacy compatibility)
 Polynomial Polynomial::vanishing_polynomial(const std::vector<Fr>& roots) {
     return vanishing(roots);
 }
-
-// Random polynomial of given degree
 Polynomial Polynomial::random(size_t degree) {
     std::vector<Fr> coeffs;
     coeffs.reserve(degree + 1);
@@ -423,8 +385,6 @@ Polynomial Polynomial::random(size_t degree) {
     }
     return Polynomial(coeffs);
 }
-
-// Utilities (legacy compatibility)
 void Polynomial::resize(size_t new_size) {
     coeffs.resize(new_size, Fr());
 }
@@ -439,4 +399,4 @@ void Polynomial::ensure_size(size_t size) {
     }
 }
 
-} // namespace zkmini
+}

@@ -124,4 +124,4 @@ Fq6 Fq6::mul_by_nonresidue() const {
     return Fq6(c2 * NON_RESIDUE, c0, c1);
 }
 
-} // namespace zkmini
+}
