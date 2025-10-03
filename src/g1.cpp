@@ -1,12 +1,7 @@
 #include "zkmini/g1.hpp"
 #include "zkmini/random.hpp"
 
-n    if (this->is_zero()) return G1();
-    
-    G1 result;
-    G1 addend = *this;
-    
-    auto scalar_bytes = scalar.to_bytes(); zkmini {
+namespace zkmini {
 
 G1::G1() : x(), y(), z() {}
 
